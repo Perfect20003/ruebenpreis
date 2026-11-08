@@ -678,8 +678,13 @@ loginOverlay.addEventListener('click', (e) => { if (e.target === loginOverlay) l
 async function anmelden() {
   loginFehler.style.display = 'none';
   try {
-    await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value.trim(), document.getElementById('loginPasswort').value);
+    const cred = await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value.trim(), document.getElementById('loginPasswort').value);
     document.getElementById('loginPasswort').value = '';
+    if (cred.user.uid !== CHEF_UID) {
+      await signOut(auth);
+      loginFehler.textContent = 'Dieses Konto darf hier nichts ändern.'; loginFehler.style.display = 'block';
+      return;
+    }
     loginOverlay.style.display = 'none';
   } catch (err) {
     loginFehler.textContent = 'Anmeldung fehlgeschlagen.'; loginFehler.style.display = 'block';
@@ -695,11 +700,7 @@ onAuthStateChanged(auth, (user) => {
   document.body.classList.toggle('chef', istChef);
   document.getElementById('btnAnmelden').style.display = istChef ? 'none' : '';
   renderListe(gefiltert().slice().reverse());
-  if (user && !istChef) {
-    // Anderes Konto: hat keine Rechte -> gleich wieder abmelden.
-    signOut(auth);
-    alert('Dieses Konto darf hier nichts ändern.');
-  }
+  // Anonyme Anmeldung (kommt von der Hauptseite auf derselben Adresse) einfach ignorieren - kein Popup.
   if (istChef && !besucherAbo) besucherAbo = onSnapshot(query(besucheRef, orderBy('zeit', 'desc'), limit(5000)), renderBesucher,
     (err) => { document.getElementById('besucherListe').innerHTML = `<tr><td colspan="5" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; });
   if (!istChef && besucherAbo) { besucherAbo(); besucherAbo = null; }
