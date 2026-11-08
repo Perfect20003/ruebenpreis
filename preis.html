@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0e14">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAcCAYAAAAAwr0iAAAFb0lEQVR42s2WS48dRxXHf1Vd1d336eu5Y1vh4Zk4iQRKgoQECyRgwQ6+AWzZeMWK78KCfT4GEkhRlAiW4EBsZ2zH87Bn7txn3+6uF4tTAx8hczfdrb5d59T/VUf99Gc/B50AsEWJ7SsAqtQwthf86L1RAjD+gsrtABg6jU2JwkQAIgUhjOiCAaAYD7gKBQBPGsPpSiniHQDcLqC9lxpjg4GaGGVhrRy6CwCkfsGekzQojwEYmJZa93IfLaV2pKIBQAFWL/BVCcA2KPzgrmxqF3FNTAP7UAGkVFEbaRRl0HzLP2OYEHwnDbVbDo0FYDIErwd87/hdAPa7OWWUfis/oFA7Ov1K0PKvKX1kXAhClYL7U6FnFfeszrfU5h4A1yrildC87zxGhYZBbAGY14oPHowTQKkS944+4nePH0urHsgfoiagduC/lOf9l9C9BCWU0HVgpeDBX77Gb57ilQjtP12jtojm2lTcAgpS95Q6OoFOK+bTA1Fr11PpAiaDvEsPmQJSABIgYkqxQMUCCoGdMZAFOqtWfGfUkCqh+eJ0QRvGIuZiivnuLHBPyULGd/zgh0cAjCZHbHcv4MkXsmhIdK04pOktPjV4Lxro21fYsKAq12LTUcfgjtjOVhuOHlXcnc1FA4tVKpdiwy1gHs3qFC5OFcB7HzxKv/n9b6Vg1UH/jM8++ZNwmRyhEaQ+/ccLprOS1bWIztZQTeQK8JMfw6I5A+DowyN+/YtfwlIa2l2t6f/6tWiumt4CDRzaEjMeJICDoYJiI2/0DvSGQbHPCCQ23TUAhzUMyp6DQ/mrHUJjwOXtrDYQJQjpaSAsoZaQejCLHE1LBdDaKhk6UFsRTFi/gfZpbqCF1Tkvn5+IKJ0l9kLB/J0hqlTYsLsJNFIN87kC4P2Pj3FJrB2KxOWLr5h2bwFYnJ+wWYog/eD6FlDQh4bUCQJ90xEaQSDQEa+WvD7JgOAYZkcef/yANrXYvcAaYsuo2vPgoYTP+PghBEHgzbOvOHu6YOOFvvWiw6Vc3VpMmHTMWonf6ThQpNdyovUtxIpKUGVgwYfcTLknuSXjfOCYqOm7PcM2J6HfQyXWtj5RtlDdWL0An93iTYlpg6YPOUCUAyO8UrZgC1JuQBXgRAK0/ZLWtTRIwYlSKA/KdRlXwOYGbEVhIfTyvFzCW5ED68Wl+vY10G1nLHffAHA/AkpSisKTzJZNBmcTwVY31BkGpabPrmi0xkQYjiRscAGU2HebHDur6RqBcrkGl53eqYgp9AF2LDFZVBvIExFxi0qeeiSP1x0M86uN2kKtcEogd0Bsoe6FvkMVwd8oraSq5hTFPIt5RZnkndHDW2DD5y9eqrlaCjzXPb/6/DwBrDf/ZDwtePyH9zMlmjYIPXo2wmk5BW8GEOsCmLzrMkE5BeDs2ROe/32PWQtamwuNc2JfH8E4DKtegPAeLs9kkVJPKIcBDub5CN5T12LXhKashv/3pQ+QOlDZMl5BKDPRY1yzx+2GkjXB4G3OD11hdtFiiokUHTv6zFVVRt4uTzloJnlXQyjEwPHNJcWdCsiBrzSoCEUeNl2UqQkY6nsk5VghRde2YG2yIFO6BRrQ9ex/k8zp1VX68yd/k/G5gdkY/vjOdQI4v3yFzrH4+RcXVBXEnDtEoIcyA+IdDARx/vVvOPkGlaqtMKIP2Y9m8pkeYnbKUiAjUjn5vlqH6zwBrYkbODsX2IO7j2pkAGnfXJAs6CyBspB7nSVQxgLfT/LEvMGpwDpKR/tiQKtESy3qFlDQuICpqnx236XZ3OR7zeG8JNl38zFxReolwubDC6zS5FkWksH7REgiQhUt+07ugxoR65a9FpT7eoK3Od1UyX8By211vxf9fa4AAAAASUVORK5CYII=">
+<title>Rübenpreis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --card: #0b0e14;
+    --border: #1e2230;
+    --accent: #22c55e;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --gold: #f59e0b;
+    --warning: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  button { font-family: inherit; border: none; }
+  input { font-family: inherit; }
+
+  header {
+    background: rgba(26, 29, 39, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.15rem; color: #fff; }
+  .logo-icon { width: 36px; height: auto; image-rendering: pixelated; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sync-status { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--muted); }
+  .sync-status.connected { color: var(--accent); }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .sync-status.connected .sync-dot { background: var(--accent); }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 18px 16px 40px; }
+
+  .preis-karte {
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    background: rgba(11, 14, 20, 0.88); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 18px; margin-bottom: 16px;
+  }
+  .preis-label { color: var(--muted); font-size: 0.8rem; font-weight: 600; }
+  .preis-gross { font-size: 1.7rem; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+  .preis-gross .coin-icon { width: 24px; }
+  .preis-meta { display: flex; flex-direction: column; gap: 3px; font-size: 0.82rem; }
+  .preis-meta .muted { color: var(--muted); }
+
+  .coin-icon { width: 15px; height: auto; image-rendering: pixelated; vertical-align: -2px; }
+
+  .history-panel {
+    background: rgba(11, 14, 20, 0.88); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px; margin-bottom: 16px; display: flex; flex-direction: column;
+  }
+  .history-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .history-header h2 { font-size: 1rem; font-weight: 700; color: #fff; }
+  .history-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn-clear-history {
+    background: #1f2431; color: #fff; font-size: 0.75rem; font-weight: 600;
+    padding: 6px 10px; border-radius: 8px; cursor: pointer;
+  }
+  .btn-clear-history:hover { background: #2d3446; }
+  .btn-clear-history:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .active-range { background: var(--accent) !important; color: #000 !important; }
+  .nur-chef { display: none; }
+  body.chef .nur-chef { display: inline-block; }
+  body.chef section.nur-chef { display: flex; }
+
+  .history-body { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+  @media (max-width: 700px) { .history-body { grid-template-columns: 1fr; } }
+
+  .history-list {
+    list-style: none; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;
+    padding-right: 4px; scrollbar-color: #fff #0b0e14; scrollbar-width: thin;
+  }
+  .history-list li {
+    display: flex; align-items: center; gap: 6px; font-size: 0.78rem; padding: 5px 8px;
+    border-radius: 6px; background: #151922;
+  }
+  .history-price { font-weight: 700; color: var(--gold); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .history-change { font-size: 0.72rem; font-weight: 700; flex-shrink: 0; }
+  .history-date { color: var(--muted); margin-left: auto; flex-shrink: 0; }
+  .history-sender { color: #38bdf8; font-size: 0.72rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .prog-karten { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .prog-karte { background: #151922; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
+  .prog-gross { font-size: 1.3rem; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+  .prog-mittel { font-size: 1rem; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+  .prog-klein { color: var(--muted); font-size: 0.75rem; }
+  .prog-hinweis { color: var(--muted); font-size: 0.75rem; margin-top: 10px; }
+  .history-empty { color: var(--muted); justify-content: center; }
+  .history-delete-btn {
+    background: none; color: var(--muted); cursor: pointer; font-size: 0.75rem; padding: 0 4px; line-height: 1;
+    display: none; flex-shrink: 0;
+  }
+  body.chef .history-delete-btn { display: inline-block; opacity: 0; transition: opacity 0.15s, color 0.15s; }
+  body.chef .history-list li:hover .history-delete-btn { opacity: 1; }
+  .history-delete-btn:hover { color: var(--warning); }
+
+  .chart-wrap { position: relative; min-height: 260px; }
+  .chart-wrap svg { width: 100%; height: 260px; display: block; }
+  .chart-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.82rem; }
+  .chart-tooltip {
+    position: absolute; display: none; flex-direction: column; align-items: center; gap: 4px;
+    background: #1a1d27; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px;
+    font-size: 0.75rem; color: var(--text); white-space: nowrap; pointer-events: none;
+    transform: translate(-50%, -115%); z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .chart-tooltip .tooltip-price { font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 4px; }
+
+  /* Besucher (nur fuer Perfect2003) */
+  .besucher-tabelle { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .besucher-tabelle th, .besucher-tabelle td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .besucher-tabelle th { color: var(--muted); font-weight: 600; }
+  .besucher-tabelle td.zahl { font-variant-numeric: tabular-nums; text-align: right; }
+  .besucher-tabelle th.zahl { text-align: right; }
+  .besucher-summe { color: var(--muted); font-size: 0.8rem; }
+
+  /* Overlays */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center;
+    z-index: 50; padding: 16px;
+  }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+    width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .modal h3 { font-size: 1rem; color: #fff; }
+  .modal p { font-size: 0.85rem; color: var(--muted); line-height: 1.45; }
+  .modal label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+  .modal input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 9px 10px; border-radius: 8px; font-size: 0.9rem; outline: none;
+  }
+  .modal input:focus { border-color: var(--accent); }
+  .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+  .btn-primary { background: var(--accent); color: #0f1117; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+  .btn-secondary { background: #1f2431; color: #fff; font-weight: 600; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+  .fehler { color: var(--warning); font-size: 0.8rem; display: none; }
+
+  /* Freiwilliger Name (unten rechts, nicht aufdringlich) */
+  .name-hinweis {
+    position: fixed; right: 16px; bottom: 16px; max-width: 340px; z-index: 40;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px;
+    display: none; flex-direction: column; gap: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  }
+  .name-hinweis p { font-size: 0.82rem; color: var(--text); line-height: 1.45; }
+  .name-hinweis .klein { color: var(--muted); font-size: 0.75rem; }
+  .name-hinweis input {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 10px; border-radius: 8px; font-size: 0.85rem; outline: none;
+  }
+  .name-hinweis input:focus { border-color: var(--accent); }
+  @media (max-width: 500px) { .name-hinweis { left: 16px; right: 16px; max-width: none; } }
+
+  footer { text-align: center; color: var(--muted); font-size: 0.75rem; padding: 10px 16px 24px; }
+  footer button { background: none; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 0.75rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Rübenpreis</div>
+  <div class="header-right">
+    <span id="chefInfo" class="nur-chef" style="font-size:0.78rem;color:var(--accent);font-weight:600;">Angemeldet als Perfect2003</span>
+    <button class="btn-clear-history nur-chef" id="btnAbmelden">Abmelden</button>
+    <div class="sync-status" id="syncStatus"><div class="sync-dot"></div><span id="syncLabel">Verbinde…</span></div>
+  </div>
+</header>
+
+<main>
+  <div class="preis-karte">
+    <div>
+      <div class="preis-label">Aktueller Rübenpreis</div>
+      <div class="preis-gross"><span id="aktPreis">–</span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAcCAYAAAAAwr0iAAAFb0lEQVR42s2WS48dRxXHf1Vd1d336eu5Y1vh4Zk4iQRKgoQECyRgwQ6+AWzZeMWK78KCfT4GEkhRlAiW4EBsZ2zH87Bn7txn3+6uF4tTAx8hczfdrb5d59T/VUf99Gc/B50AsEWJ7SsAqtQwthf86L1RAjD+gsrtABg6jU2JwkQAIgUhjOiCAaAYD7gKBQBPGsPpSiniHQDcLqC9lxpjg4GaGGVhrRy6CwCkfsGekzQojwEYmJZa93IfLaV2pKIBQAFWL/BVCcA2KPzgrmxqF3FNTAP7UAGkVFEbaRRl0HzLP2OYEHwnDbVbDo0FYDIErwd87/hdAPa7OWWUfis/oFA7Ov1K0PKvKX1kXAhClYL7U6FnFfeszrfU5h4A1yrildC87zxGhYZBbAGY14oPHowTQKkS944+4nePH0urHsgfoiagduC/lOf9l9C9BCWU0HVgpeDBX77Gb57ilQjtP12jtojm2lTcAgpS95Q6OoFOK+bTA1Fr11PpAiaDvEsPmQJSABIgYkqxQMUCCoGdMZAFOqtWfGfUkCqh+eJ0QRvGIuZiivnuLHBPyULGd/zgh0cAjCZHbHcv4MkXsmhIdK04pOktPjV4Lxro21fYsKAq12LTUcfgjtjOVhuOHlXcnc1FA4tVKpdiwy1gHs3qFC5OFcB7HzxKv/n9b6Vg1UH/jM8++ZNwmRyhEaQ+/ccLprOS1bWIztZQTeQK8JMfw6I5A+DowyN+/YtfwlIa2l2t6f/6tWiumt4CDRzaEjMeJICDoYJiI2/0DvSGQbHPCCQ23TUAhzUMyp6DQ/mrHUJjwOXtrDYQJQjpaSAsoZaQejCLHE1LBdDaKhk6UFsRTFi/gfZpbqCF1Tkvn5+IKJ0l9kLB/J0hqlTYsLsJNFIN87kC4P2Pj3FJrB2KxOWLr5h2bwFYnJ+wWYog/eD6FlDQh4bUCQJ90xEaQSDQEa+WvD7JgOAYZkcef/yANrXYvcAaYsuo2vPgoYTP+PghBEHgzbOvOHu6YOOFvvWiw6Vc3VpMmHTMWonf6ThQpNdyovUtxIpKUGVgwYfcTLknuSXjfOCYqOm7PcM2J6HfQyXWtj5RtlDdWL0An93iTYlpg6YPOUCUAyO8UrZgC1JuQBXgRAK0/ZLWtTRIwYlSKA/KdRlXwOYGbEVhIfTyvFzCW5ED68Wl+vY10G1nLHffAHA/AkpSisKTzJZNBmcTwVY31BkGpabPrmi0xkQYjiRscAGU2HebHDur6RqBcrkGl53eqYgp9AF2LDFZVBvIExFxi0qeeiSP1x0M86uN2kKtcEogd0Bsoe6FvkMVwd8oraSq5hTFPIt5RZnkndHDW2DD5y9eqrlaCjzXPb/6/DwBrDf/ZDwtePyH9zMlmjYIPXo2wmk5BW8GEOsCmLzrMkE5BeDs2ROe/32PWQtamwuNc2JfH8E4DKtegPAeLs9kkVJPKIcBDub5CN5T12LXhKashv/3pQ+QOlDZMl5BKDPRY1yzx+2GkjXB4G3OD11hdtFiiokUHTv6zFVVRt4uTzloJnlXQyjEwPHNJcWdCsiBrzSoCEUeNl2UqQkY6nsk5VghRde2YG2yIFO6BRrQ9ex/k8zp1VX68yd/k/G5gdkY/vjOdQI4v3yFzrH4+RcXVBXEnDtEoIcyA+IdDARx/vVvOPkGlaqtMKIP2Y9m8pkeYnbKUiAjUjn5vlqH6zwBrYkbODsX2IO7j2pkAGnfXJAs6CyBspB7nSVQxgLfT/LEvMGpwDpKR/tiQKtESy3qFlDQuICpqnx236XZ3OR7zeG8JNl38zFxReolwubDC6zS5FkWksH7REgiQhUt+07ugxoR65a9FpT7eoK3Od1UyX8By211vxf9fa4AAAAASUVORK5CYII=" class="coin-icon" alt=""></div>
+    </div>
+    <div class="preis-meta">
+      <span id="aktAenderung" class="muted">–</span>
+      <span id="aktDatum" class="muted">–</span>
+    </div>
+  </div>
+
+  <section class="history-panel">
+    <div class="history-header">
+      <h2>Marktpreis-Verlauf</h2>
+      <div class="history-tools">
+        <span id="avgPrice" title="Ø Preis im gewählten Zeitraum" style="color:var(--gold); font-weight:700; white-space:nowrap; margin-right:4px;">Ø –</span>
+        <button class="btn-clear-history btn-timerange" data-days="7">7T</button>
+        <button class="btn-clear-history btn-timerange active-range" data-days="30">1M</button>
+        <button class="btn-clear-history btn-timerange" data-days="90">3M</button>
+        <button class="btn-clear-history btn-timerange" data-days="0">Alles</button>
+        <button class="btn-clear-history" id="btnToggleLog">Log-Skala: Ein</button>
+        <button class="btn-clear-history nur-chef" id="btnBackfillPrice" title="Preis mit Datum eintragen">Wert eintragen</button>
+      </div>
+    </div>
+    <div class="history-body">
+      <div class="chart-wrap">
+        <svg id="priceChart" viewBox="0 0 600 260" role="img" aria-label="Verlauf des Rübenpreises"></svg>
+        <div class="chart-empty" id="chartEmpty">Lade Preise…</div>
+        <div class="chart-tooltip" id="chartTooltip"></div>
+      </div>
+      <ul class="history-list" id="historyList"></ul>
+    </div>
+  </section>
+
+  <section class="history-panel">
+    <div class="history-header">
+      <h2>Prognose <span style="color:var(--muted);font-weight:500;font-size:0.8rem;">(Probe)</span></h2>
+    </div>
+    <div id="prognoseInhalt"><p class="prog-hinweis">Lade…</p></div>
+  </section>
+
+  <section class="history-panel nur-chef" id="panelBesucher" style="flex-direction:column;">
+    <div class="history-header">
+      <h2>Besucher <span style="color:var(--muted);font-weight:500;font-size:0.8rem;">(nur du siehst das)</span></h2>
+      <div class="history-tools">
+        <span class="besucher-summe" id="besucherSumme">–</span>
+        <button class="btn-clear-history" id="btnBesucherLeeren">Liste leeren</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="besucher-tabelle">
+        <thead><tr><th>Name</th><th class="zahl">Besuche</th><th>Zuletzt</th><th>Zuerst</th><th>Gerät</th></tr></thead>
+        <tbody id="besucherListe"><tr><td colspan="5" style="color:var(--muted)">Lade…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Preise von Cytooxien, eingetragen von Perfect2003 ·
+  <button id="btnNameAendern">Namen angeben/ändern</button> ·
+  <button id="btnAnmelden">Anmelden</button>
+</footer>
+
+<!-- Freiwilliger Name -->
+<div class="name-hinweis" id="nameHinweis" role="dialog" aria-label="Freiwilliger Name">
+  <p>Hi! Ich (Perfect2003) will gucken, wer das hier wirklich nutzt und ob sich die Seite lohnt. Magst du mir deinen Minecraft-Namen verraten?</p>
+  <input type="text" id="nameEingabe" maxlength="24" placeholder="Minecraft-Name" autocomplete="nickname">
+  <div class="modal-buttons">
+    <button class="btn-secondary" id="btnNameNein">Lieber nicht</button>
+    <button class="btn-primary" id="btnNameJa">Speichern</button>
+  </div>
+</div>
+
+<!-- Anmelden (nur Perfect2003) -->
+<div class="overlay" id="loginOverlay">
+  <div class="modal">
+    <h3>Anmelden</h3>
+    <p>Nur zum Bearbeiten. Das Passwort wird direkt von Google (Firebase) geprüft.</p>
+    <label for="loginEmail">E-Mail</label>
+    <input type="email" id="loginEmail" autocomplete="username">
+    <label for="loginPasswort">Passwort</label>
+    <input type="password" id="loginPasswort" autocomplete="current-password">
+    <span class="fehler" id="loginFehler">Anmeldung fehlgeschlagen.</span>
+    <div class="modal-buttons">
+      <button class="btn-secondary" id="btnLoginAbbrechen">Abbrechen</button>
+      <button class="btn-primary" id="btnLoginOk">Anmelden</button>
+    </div>
+  </div>
+</div>
+
+<!-- Wert eintragen (nur Perfect2003) -->
+<div class="overlay" id="backfillOverlay">
+  <div class="modal">
+    <h3>Preis eintragen</h3>
+    <label for="backfillDate">Datum</label>
+    <input type="date" id="backfillDate">
+    <label for="backfillTime">Uhrzeit</label>
+    <input type="time" id="backfillTime" value="12:00">
+    <label for="backfillPrice">Preis</label>
+    <input type="text" id="backfillPrice" inputmode="numeric" placeholder="z.B. 120.000">
+    <span class="fehler" id="backfillFehler"></span>
+    <div class="modal-buttons">
+      <button class="btn-secondary" id="btnBackfillAbbrechen">Abbrechen</button>
+      <button class="btn-primary" id="btnBackfillOk">Eintragen</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot, doc, addDoc, deleteDoc, query, orderBy, limit, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// Diese Werte sind NICHT geheim (Firebase-Web-Konfiguration). Geschützt wird alles über die
+// Firestore-Regeln: nur das Konto mit CHEF_UID darf Preise ändern oder die Besucher lesen.
+const firebaseConfig = {
+  apiKey: "AIzaSyB6dxEUrQsk3FAIHDGA0rObqwXSYE3jt1w",
+  authDomain: "ruebentimer.firebaseapp.com",
+  projectId: "ruebentimer",
+  storageBucket: "ruebentimer.firebasestorage.app",
+  messagingSenderId: "193161065289",
+  appId: "1:193161065289:web:1ec75431795e1c3596a098"
+};
+const CHEF_UID = "XHgvcM84nIUHUjpzybbLj0Vf4Dv2";
+
+const ICON_COIN = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAcCAYAAAAAwr0iAAAFb0lEQVR42s2WS48dRxXHf1Vd1d336eu5Y1vh4Zk4iQRKgoQECyRgwQ6+AWzZeMWK78KCfT4GEkhRlAiW4EBsZ2zH87Bn7txn3+6uF4tTAx8hczfdrb5d59T/VUf99Gc/B50AsEWJ7SsAqtQwthf86L1RAjD+gsrtABg6jU2JwkQAIgUhjOiCAaAYD7gKBQBPGsPpSiniHQDcLqC9lxpjg4GaGGVhrRy6CwCkfsGekzQojwEYmJZa93IfLaV2pKIBQAFWL/BVCcA2KPzgrmxqF3FNTAP7UAGkVFEbaRRl0HzLP2OYEHwnDbVbDo0FYDIErwd87/hdAPa7OWWUfis/oFA7Ov1K0PKvKX1kXAhClYL7U6FnFfeszrfU5h4A1yrildC87zxGhYZBbAGY14oPHowTQKkS944+4nePH0urHsgfoiagduC/lOf9l9C9BCWU0HVgpeDBX77Gb57ilQjtP12jtojm2lTcAgpS95Q6OoFOK+bTA1Fr11PpAiaDvEsPmQJSABIgYkqxQMUCCoGdMZAFOqtWfGfUkCqh+eJ0QRvGIuZiivnuLHBPyULGd/zgh0cAjCZHbHcv4MkXsmhIdK04pOktPjV4Lxro21fYsKAq12LTUcfgjtjOVhuOHlXcnc1FA4tVKpdiwy1gHs3qFC5OFcB7HzxKv/n9b6Vg1UH/jM8++ZNwmRyhEaQ+/ccLprOS1bWIztZQTeQK8JMfw6I5A+DowyN+/YtfwlIa2l2t6f/6tWiumt4CDRzaEjMeJICDoYJiI2/0DvSGQbHPCCQ23TUAhzUMyp6DQ/mrHUJjwOXtrDYQJQjpaSAsoZaQejCLHE1LBdDaKhk6UFsRTFi/gfZpbqCF1Tkvn5+IKJ0l9kLB/J0hqlTYsLsJNFIN87kC4P2Pj3FJrB2KxOWLr5h2bwFYnJ+wWYog/eD6FlDQh4bUCQJ90xEaQSDQEa+WvD7JgOAYZkcef/yANrXYvcAaYsuo2vPgoYTP+PghBEHgzbOvOHu6YOOFvvWiw6Vc3VpMmHTMWonf6ThQpNdyovUtxIpKUGVgwYfcTLknuSXjfOCYqOm7PcM2J6HfQyXWtj5RtlDdWL0An93iTYlpg6YPOUCUAyO8UrZgC1JuQBXgRAK0/ZLWtTRIwYlSKA/KdRlXwOYGbEVhIfTyvFzCW5ED68Wl+vY10G1nLHffAHA/AkpSisKTzJZNBmcTwVY31BkGpabPrmi0xkQYjiRscAGU2HebHDur6RqBcrkGl53eqYgp9AF2LDFZVBvIExFxi0qeeiSP1x0M86uN2kKtcEogd0Bsoe6FvkMVwd8oraSq5hTFPIt5RZnkndHDW2DD5y9eqrlaCjzXPb/6/DwBrDf/ZDwtePyH9zMlmjYIPXo2wmk5BW8GEOsCmLzrMkE5BeDs2ROe/32PWQtamwuNc2JfH8E4DKtegPAeLs9kkVJPKIcBDub5CN5T12LXhKashv/3pQ+QOlDZMl5BKDPRY1yzx+2GkjXB4G3OD11hdtFiiokUHTv6zFVVRt4uTzloJnlXQyjEwPHNJcWdCsiBrzSoCEUeNl2UqQkY6nsk5VghRde2YG2yIFO6BRrQ9ex/k8zp1VX68yd/k/G5gdkY/vjOdQI4v3yFzrH4+RcXVBXEnDtEoIcyA+IdDARx/vVvOPkGlaqtMKIP2Y9m8pkeYnbKUiAjUjn5vlqH6zwBrYkbODsX2IO7j2pkAGnfXJAs6CyBspB7nSVQxgLfT/LEvMGpwDpKR/tiQKtESy3qFlDQuICpqnx236XZ3OR7zeG8JNl38zFxReolwubDC6zS5FkWksH7REgiQhUt+07ugxoR65a9FpT7eoK3Od1UyX8By211vxf9fa4AAAAASUVORK5CYII=";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const historyColRef = collection(db, "settings", "global", "priceHistory");
+const besucheRef = collection(db, "preisBesuche");
+
+let istChef = false;
+
+// ---------- Hilfsfunktionen ----------
+const fmt = (n) => Math.round(n).toLocaleString('de-DE');
+const parsePreis = (v) => parseInt(String(v).replace(/\./g, '').replace(/\s/g, ''), 10) || 0;
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function aenderungHtml(neu, alt) {
+  if (!(alt > 0)) return '<span style="color:var(--muted);">Erster Eintrag</span>';
+  const pct = Math.round((neu - alt) / alt * 1000) / 10;
+  const farbe = pct > 0 ? '#22c55e' : (pct < 0 ? '#ef4444' : 'var(--muted)');
+  const pfeil = pct > 0 ? '▲' : (pct < 0 ? '▼' : '±');
+  const vz = pct > 0 ? '+' : '';
+  return `<span style="color:${farbe}; font-weight:700;">${pfeil} ${vz}${pct.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</span>`;
+}
+
+// ---------- Preisverlauf ----------
+let eintraegeAsc = [];
+let activeRangeDays = 30;
+let useLogScale = true;
+
+function gefiltert() {
+  return activeRangeDays === 0 ? eintraegeAsc : eintraegeAsc.slice(-activeRangeDays);
+}
+
+function renderAlles() {
+  renderAktuell();
+  renderListe(gefiltert().slice().reverse());
+  renderChart(gefiltert());
+  renderDurchschnitt();
+  try { renderPrognose(); } catch (e) { console.error(e); }
+}
+
+function renderAktuell() {
+  const n = eintraegeAsc.length;
+  if (!n) return;
+  const letzter = eintraegeAsc[n - 1];
+  const vorher = n > 1 ? eintraegeAsc[n - 2] : null;
+  document.getElementById('aktPreis').textContent = fmt(letzter.price);
+  document.getElementById('aktAenderung').innerHTML = vorher
+    ? `${aenderungHtml(letzter.price, vorher.price)} <span class="muted">zum Vortag (${fmt(vorher.price)})</span>`
+    : '<span class="muted">Erster Eintrag</span>';
+  document.getElementById('aktDatum').textContent = 'Stand: ' +
+    new Date(letzter.timestamp).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) + ' Uhr';
+}
+
+function renderDurchschnitt() {
+  const el = document.getElementById('avgPrice');
+  const label = activeRangeDays === 7 ? '7T' : activeRangeDays === 30 ? '1M' : activeRangeDays === 90 ? '3M' : 'Alle';
+  const e = gefiltert();
+  if (!e.length) { el.textContent = `Ø ${label}: –`; return; }
+  el.textContent = `Ø ${label}: ${fmt(e.reduce((a, x) => a + (Number(x.price) || 0), 0) / e.length)}`;
+}
+
+function renderListe(desc) {
+  const list = document.getElementById('historyList');
+  if (!desc.length) { list.innerHTML = '<li class="history-empty">Noch keine Preise erfasst.</li>'; return; }
+  list.innerHTML = desc.map((e, i) => {
+    const vorher = desc[i + 1];
+    const datum = new Date(e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+    return `<li>
+      <span class="history-price">${fmt(e.price)} <img src="${ICON_COIN}" class="coin-icon" alt=""></span>
+      <span class="history-change">${vorher ? aenderungHtml(e.price, vorher.price) : ''}</span>
+      ${istChef ? `<span class="history-sender" title="${esc(e.uuid || '')}">${e.sender ? 'von ' + esc(e.sender) : '<span style="opacity:.6">ohne Absender</span>'}</span>` : ''}
+      <span class="history-date">${datum}</span>
+      <button class="history-delete-btn" data-id="${esc(e._id)}" title="Eintrag löschen" aria-label="Eintrag löschen">✕</button>
+    </li>`;
+  }).join('');
+  list.querySelectorAll('.history-delete-btn').forEach(btn => btn.addEventListener('click', async () => {
+    if (!istChef) return;
+    if (!confirm('Diesen Eintrag löschen?')) return;
+    try { await deleteDoc(doc(db, 'settings', 'global', 'priceHistory', btn.dataset.id)); }
+    catch (err) { alert('Löschen fehlgeschlagen: ' + err.message); }
+  }));
+}
+
+function fmtY(n) {
+  if (n >= 1000000) { const v = n / 1000000; return (Number.isInteger(v) ? v : v.toLocaleString('de-DE', { maximumFractionDigits: 1 })) + ' Mio'; }
+  if (n >= 1000) { const v = n / 1000; return (Number.isInteger(v) ? v : v.toLocaleString('de-DE', { maximumFractionDigits: 0 })) + 'k'; }
+  return Math.round(n).toLocaleString('de-DE');
+}
+function niceTicks(minV, maxV, count = 5) {
+  const range = maxV - minV || 1;
+  const step = Math.pow(10, Math.floor(Math.log10(range / count)));
+  const mag = range / count / step;
+  const ns = (mag < 1.5 ? 1 : mag < 3 ? 2 : mag < 7 ? 5 : 10) * step;
+  const t = [];
+  for (let v = Math.ceil(minV / ns) * ns; v <= maxV + ns * 0.01; v += ns) if (v >= minV - ns * 0.01) t.push(Math.round(v));
+  return t;
+}
+function niceLogTicks(minV, maxV, count = 5) {
+  const lo = Math.max(1, minV), hi = Math.max(lo + 1, maxV);
+  const alle = [];
+  for (let exp = 0; exp <= 8; exp++) for (const m of [1, 2, 5]) alle.push(m * Math.pow(10, exp));
+  const kand = alle.filter(v => v >= lo * 0.85 && v <= hi * 1.15);
+  if (kand.length <= count + 1) return kand;
+  const lLo = Math.log10(kand[0]), lHi = Math.log10(kand[kand.length - 1]);
+  const step = (lHi - lLo) / (count - 1 || 1);
+  const pick = [];
+  for (let i = 0; i < count; i++) {
+    const ziel = lLo + i * step;
+    let best = kand[0], bd = Infinity;
+    for (const c of kand) { const d = Math.abs(Math.log10(c) - ziel); if (d < bd) { best = c; bd = d; } }
+    pick.push(best);
+  }
+  return [...new Set(pick)].sort((a, b) => a - b);
+}
+
+function renderChart(asc) {
+  const svg = document.getElementById('priceChart');
+  const leer = document.getElementById('chartEmpty');
+  const tooltip = document.getElementById('chartTooltip');
+  tooltip.style.display = 'none';
+  if (!asc.length) { svg.innerHTML = ''; leer.textContent = 'Noch keine Preise erfasst.'; leer.style.display = 'flex'; return; }
+  leer.style.display = 'none';
+
+  const H = 260, PT = 14, PB = 28, PR = 12;
+  const W = svg.getBoundingClientRect().width || 600;
+  const preise = asc.map(e => e.price);
+  const minP = Math.min(...preise), maxP = Math.max(...preise);
+  const logMin = Math.max(1, minP), logMax = Math.max(logMin + 1, maxP);
+  const toY = (v) => useLogScale
+    ? (H - PB) - ((Math.log10(Math.max(1, v)) - Math.log10(logMin)) / ((Math.log10(logMax) - Math.log10(logMin)) || 1)) * (H - PB - PT)
+    : (H - PB) - ((v - minP) / ((maxP - minP) || 1)) * (H - PB - PT);
+  const ticks = useLogScale ? niceLogTicks(logMin, logMax, 5) : niceTicks(minP, maxP, 5);
+  const laengstes = ticks.reduce((a, t) => { const s = fmtY(t); return s.length > a.length ? s : a; }, '');
+  const PL = Math.max(44, laengstes.length * 7 + 8);
+  const plotW = W - PL - PR;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const stepX = asc.length > 1 ? plotW / (asc.length - 1) : 0;
+  const pts = asc.map((e, i) => ({ x: asc.length > 1 ? PL + i * stepX : PL + plotW / 2, y: toY(e.price), e }));
+  const pathD = pts.map((p, i) => `${i ? 'L' : 'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const areaD = `${pathD} L ${pts[pts.length - 1].x.toFixed(1)} ${H - PB} L ${pts[0].x.toFixed(1)} ${H - PB} Z`;
+  const grid = ticks.map(t => {
+    const yN = toY(t);
+    const ly = ((H - PB) - yN < 12) ? (H - PB - 12) : yN;
+    return `<line x1="${PL}" y1="${yN.toFixed(1)}" x2="${W - PR}" y2="${yN.toFixed(1)}" stroke="rgba(255,255,255,0.06)"></line>
+      <text x="${PL - 6}" y="${ly.toFixed(1)}" fill="var(--muted)" font-size="11" text-anchor="end" dominant-baseline="middle">${fmtY(t)}</text>`;
+  }).join('');
+  const lStep = Math.max(1, Math.ceil(pts.length / 12));
+  const daten = pts.map((p, i) => {
+    if (i % lStep !== 0 && i !== pts.length - 1) return '';
+    const d = new Date(p.e.timestamp);
+    return `<text x="${p.x.toFixed(1)}" y="${H - 8}" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="middle">${d.getDate()}.${d.getMonth() + 1}</text>`;
+  }).join('');
+  const kreise = pts.map((p, i) => `<circle class="chart-point" data-index="${i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="var(--accent)" stroke="#0f1117" stroke-width="1.5"></circle>`).join('');
+  svg.innerHTML = `${grid}
+    <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${H - PB}" stroke="rgba(255,255,255,0.12)"></line>
+    <path d="${areaD}" fill="rgba(34,197,94,0.10)"></path>
+    <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2"></path>
+    ${kreise}${daten}`;
+
+  const wrap = svg.closest('.chart-wrap');
+  svg.querySelectorAll('.chart-point').forEach(c => {
+    const i = parseInt(c.dataset.index, 10), p = pts[i], vor = i > 0 ? pts[i - 1] : null;
+    const datum = new Date(p.e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+    const pos = (evt) => { const r = wrap.getBoundingClientRect(); tooltip.style.left = (evt.clientX - r.left) + 'px'; tooltip.style.top = (evt.clientY - r.top) + 'px'; };
+    c.addEventListener('mouseenter', (evt) => {
+      tooltip.innerHTML = `<span>${datum}</span><span class="tooltip-price">${fmt(p.e.price)} <img src="${ICON_COIN}" class="coin-icon" alt=""></span>${aenderungHtml(p.e.price, vor ? vor.e.price : 0)}`;
+      tooltip.style.display = 'flex'; c.setAttribute('r', '5.5'); pos(evt);
+    });
+    c.addEventListener('mousemove', pos);
+    c.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; c.setAttribute('r', '3.5'); });
+  });
+}
+
+document.querySelectorAll('.btn-timerange').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.btn-timerange').forEach(b => b.classList.remove('active-range'));
+  btn.classList.add('active-range');
+  activeRangeDays = parseInt(btn.dataset.days, 10);
+  renderAlles();
+}));
+document.getElementById('btnToggleLog').addEventListener('click', () => {
+  useLogScale = !useLogScale;
+  document.getElementById('btnToggleLog').textContent = `Log-Skala: ${useLogScale ? 'Ein' : 'Aus'}`;
+  renderChart(gefiltert());
+});
+let resizeTimer = null;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => renderChart(gefiltert()), 150); });
+
+// Live-Daten (lesen darf jeder)
+const sync = document.getElementById('syncStatus'), syncLabel = document.getElementById('syncLabel');
+onSnapshot(query(historyColRef, orderBy('timestamp', 'desc'), limit(10000)), (snap) => {
+  const desc = [];
+  snap.forEach(d => { const x = d.data(); if (typeof x.price === 'number' && typeof x.timestamp === 'number') desc.push({ ...x, _id: d.id }); });
+  eintraegeAsc = desc.reverse();
+  sync.classList.add('connected'); syncLabel.textContent = 'Live';
+  renderAlles();
+}, (err) => {
+  sync.classList.remove('connected'); syncLabel.textContent = 'Keine Verbindung';
+  document.getElementById('chartEmpty').textContent = 'Preise konnten nicht geladen werden.';
+  console.error(err);
+});
+
+// ---------- Prognose (wie im Rübentimer, RuebePreisVerlauf) ----------
+// Startdaten aus der Mod (aeltere Tage, die evtl. nicht im Verlauf stehen) + alle Eintraege aus dem Verlauf.
+// Pro Tag (Europe/Berlin) zaehlt der zuletzt gemeldete Preis.
+const SEED = "25.10.2026 77971;24.10.2026 69070;23.10.2026 228903;22.10.2026 211618;21.10.2026 181737;20.10.2026 150680;19.10.2026 55229;18.10.2026 31184;17.10.2026 26056;16.10.2026 402004;15.10.2026 351831;14.10.2026 274001;13.10.2026 134151;12.10.2026 103684;11.10.2026 86077;10.10.2026 69108;9.10.2026 53397;8.10.2026 45317;7.10.2026 85578;6.10.2026 65998;5.10.2026 53368;4.10.2026 50575;3.10.2026 44280;2.10.2026 42612;1.10.2026 33209;30.9.2026 31161;29.9.2026 54649;28.9.2026 42571;27.9.2026 39792;26.9.2026 33169;25.9.2026 62475;24.9.2026 56008;23.9.2026 47832;22.9.2026 41405;21.9.2026 126205;20.9.2026 118660;19.9.2026 73385;18.9.2026 73385;17.9.2026 125275;16.9.2026 108453;15.9.2026 83952;14.9.2026 64955;13.9.2026 52324;12.9.2026 42147;11.9.2026 34715;10.9.2026 28544;9.9.2026 27060;8.9.2026 85909;7.9.2026 73856;6.9.2026 58384;5.9.2026 55359;4.9.2026 50224;3.9.2026 45961;2.9.2026 65093;1.9.2026 55813;31.8.2026 99123;30.8.2026 83555;29.8.2026 64618;28.8.2026 56180;27.8.2026 97710;26.8.2026 76070;25.8.2026 68821;24.8.2026 101373;23.8.2026 80503;22.8.2026 62692;21.8.2026 49008;20.8.2026 46433;19.8.2026 350480;18.8.2026 282027;17.8.2026 247881;16.8.2026 75259;15.8.2026 70888;14.8.2026 104369;13.8.2026 88051;12.8.2026 71965;11.8.2026 65154;10.8.2026 47868;9.8.2026 37244;8.8.2026 32159;7.8.2026 28795;6.8.2026 25671;5.8.2026 40459;4.8.2026 37677;3.8.2026 32818;2.8.2026 26587;1.8.2026 63581;31.7.2026 55935;30.7.2026 160962;29.7.2026 128239;28.7.2026 108586;27.7.2026 99316;26.7.2026 91982;25.7.2026 82942;24.7.2026 65104;23.7.2026 60914;22.7.2026 92185;21.7.2026 71893;20.7.2026 66499;19.7.2026 54428;18.7.2026 43963;17.7.2026 33033;16.7.2026 27839;15.7.2026 128365;14.7.2026 100616;13.7.2026 77569;12.7.2026 67890;11.7.2026 57516;10.7.2026 1668872;9.7.2026 1487307;8.7.2026 364562;7.7.2026 337701;6.7.2026 71372;5.7.2026 59951;4.7.2026 155128;3.7.2026 74551;2.7.2026 61535;1.7.2026 534358;30.6.2026 420083;29.6.2026 337875;28.6.2026 71418;27.6.2026 139732;26.6.2026 118056;25.6.2026 91445;24.6.2026 77947;23.6.2026 67816;22.6.2026 53694;21.6.2026 46969;20.6.2026 58274;19.6.2026 48301;18.6.2026 44063;17.6.2026 845057;16.6.2026 655490;15.6.2026 516049;14.6.2026 406980;13.6.2026 328221;12.6.2026 278139;11.6.2026 215990;10.6.2026 191331;9.6.2026 156817;8.6.2026 39264;7.6.2026 35497;6.6.2026 4286106;5.6.2026 3971395;4.6.2026 3308828;3.6.2026 1278530;2.6.2026 1025139;1.6.2026 237749;31.5.2026 81885;30.5.2026 77614;29.5.2026 65095;28.5.2026 197128;27.5.2026 165718;26.5.2026 70291;25.5.2026 66922;24.5.2026 51946;23.5.2026 40631;22.5.2026 36532;21.5.2026 57093;20.5.2026 56561;19.5.2026 45715;18.5.2026 38467;17.5.2026 31036;16.5.2026 79228;15.5.2026 67043;14.5.2026 37289;13.5.2026 33850;12.5.2026 112192;11.5.2026 93428;10.5.2026 73034;9.5.2026 55033;8.5.2026 51661;7.5.2026 43117;6.5.2026 34555;5.5.2026 62891;4.5.2026 49000;3.5.2026 42384;2.5.2026 62091;1.5.2026 189085;30.4.2026 151748;29.4.2026 119252;28.4.2026 111261;27.4.2026 88185;26.4.2026 68550;25.4.2026 60198;24.4.2026 50446;23.4.2026 41227;22.4.2026 32742;21.4.2026 101360;20.4.2026 87948;19.4.2026 80710;18.4.2026 64152;17.4.2026 76946;16.4.2026 66727;15.4.2026 53913;14.4.2026 45997;13.4.2026 353845;12.4.2026 84824;11.4.2026 70802;10.4.2026 114375;9.4.2026 94615;8.4.2026 77532;7.4.2026 66810;6.4.2026 51754;5.4.2026 85951;4.4.2026 71566;3.4.2026 56739;2.4.2026 79189;1.4.2026 68194;31.3.2026 56262;30.3.2026 46764;29.3.2026 37719;28.3.2026 32594;27.3.2026 64565;26.3.2026 59835;25.3.2026 45590;24.3.2026 43089;23.3.2026 192412;22.3.2026 44432;21.3.2026 111699;20.3.2026 99688;19.3.2026 88268;18.3.2026 81826;17.3.2026 66589;16.3.2026 54265;15.3.2026 173479;14.3.2026 45252;13.3.2026 41950;12.3.2026 83230;11.3.2026 67595;10.3.2026 64281;9.3.2026 347858;8.3.2026 325412;7.3.2026 262284;6.3.2026 220874;5.3.2026 62319;4.3.2026 27098;3.3.2026 50011;2.3.2026 39466;1.3.2026 32057;28.2.2026 25138;27.2.2026 164509;26.2.2026 145783;25.2.2026 137320;24.2.2026 29433;23.2.2026 97978;22.2.2026 80887;21.2.2026 70543;20.2.2026 58201;19.2.2026 54067;18.2.2026 62056;17.2.2026 54695;16.2.2026 60832;15.2.2026 25002;14.2.2026 426671;13.2.2026 340140;12.2.2026 280343;11.2.2026 247612;10.2.2026 41889;9.2.2026 67428";
+const MAX_PHASE = 9, GRENZE_ABSTURZ = 0.9, GRENZE_SPRUNG = 1.45;
+const berlinTag = (ms) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(new Date(ms));
+const epochTag = (s) => { const [y, m, d] = s.split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / 864e5); };
+const tagText = (e) => new Date(e * 864e5).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+
+function prognoseTageListe() {
+  const map = new Map(); // epochTag -> {preis, ts}
+  for (const z of SEED.split(';')) {
+    const [d, p] = z.split(' ');
+    const [tt, mm, jj] = (d || '').split('.').map(Number);
+    if (!jj || !(Number(p) > 0)) continue;
+    map.set(Math.round(Date.UTC(jj, mm - 1, tt) / 864e5), { preis: Number(p), ts: 0 });
+  }
+  for (const e of eintraegeAsc) {
+    const k = epochTag(berlinTag(e.timestamp));
+    const alt = map.get(k);
+    if (!alt || e.timestamp >= alt.ts) map.set(k, { preis: e.price, ts: e.timestamp });
+  }
+  const keys = [...map.keys()].sort((a, b) => a - b);
+  const out = [];
+  let vorher = -1;
+  for (const k of keys) {
+    const p = map.get(k).preis;
+    if (vorher <= 0) { out.push({ tag: k, preis: p, faktor: 1, art: 'START' }); vorher = p; continue; }
+    const r = p / vorher;
+    out.push({ tag: k, preis: p, faktor: r, art: r < GRENZE_ABSTURZ ? 'ABSTURZ' : r > GRENZE_SPRUNG ? 'SPRUNG' : 'STEIGT' });
+    vorher = p;
+  }
+  return out;
+}
+
+function phaseBei(t, i) {
+  for (let k = i; k >= 0; k--) if (t[k].art === 'ABSTURZ') return t[i].tag - t[k].tag;
+  return -1;
+}
+function quantil(l, q, sonst) {
+  if (!l.length) return sonst;
+  const i = Math.round(q * (l.length - 1));
+  return l[Math.max(0, Math.min(l.length - 1, i))];
+}
+
+function statistik(t) {
+  const steigt = [], starts = [];
+  let summeSprung = 0, sprung = 0, paare = 0, abst = 0;
+  const faelle = new Array(MAX_PHASE + 1).fill(0), crash = new Array(MAX_PHASE + 1).fill(0);
+  for (let i = 1; i < t.length; i++) {
+    const a = t[i - 1], b = t[i];
+    if (b.tag - a.tag !== 1) continue;
+    paare++;
+    if (b.art === 'STEIGT') steigt.push(b.faktor);
+    else if (b.art === 'SPRUNG') { sprung++; summeSprung += b.faktor; }
+    else if (b.art === 'ABSTURZ') { abst++; starts.push(b.preis); }
+    const ph = phaseBei(t, i - 1);
+    if (ph < 0) continue;
+    const n = Math.min(MAX_PHASE, ph + 1);
+    faelle[n]++;
+    if (b.art === 'ABSTURZ') crash[n]++;
+  }
+  steigt.sort((x, y) => x - y); starts.sort((x, y) => x - y);
+  const basis = paare > 0 ? abst / paare : 0.2;
+  const risiko = new Array(MAX_PHASE + 1).fill(0);
+  for (let n = 1; n <= MAX_PHASE; n++) risiko[n] = (crash[n] + 2 * basis) / (faelle[n] + 2);
+  const nichtCrash = steigt.length + sprung;
+  const mittel = steigt.length ? steigt.reduce((x, y) => x + y, 0) / steigt.length : 1.19;
+  return {
+    q10: quantil(steigt, 0.1, 1.07), q50: quantil(steigt, 0.5, 1.19), q90: quantil(steigt, 0.9, 1.29),
+    mittelSteigt: mittel, sprungChance: nichtCrash > 0 ? sprung / nichtCrash : 0.1,
+    mittelSprung: sprung > 0 ? summeSprung / sprung : 3.0, risiko,
+    crash10: quantil(starts, 0.1, 27000), crash50: quantil(starts, 0.5, 46000), crash90: quantil(starts, 0.9, 70000)
+  };
+}
+
+const pz = (x) => Math.round(x * 100) + ' %';
+
+function renderPrognose() {
+  const box = document.getElementById('prognoseInhalt');
+  const t = prognoseTageListe();
+  if (t.length < 3) { box.innerHTML = '<p class="prog-hinweis">Noch zu wenige Preise für eine Prognose.</p>'; return; }
+  const s = statistik(t);
+  const letzter = t[t.length - 1];
+  const ph = phaseBei(t, t.length - 1);
+  const n = ph < 0 ? 3 : Math.min(MAX_PHASE, ph + 1);
+  const pA = s.risiko[n], pS = (1 - pA) * s.sprungChance, pN = 1 - pA - pS;
+  const p = letzter.preis;
+  const erwartung = pN * p * s.mittelSteigt + pS * p * s.mittelSprung + pA * s.crash50;
+
+  let ohne = 1;
+  const zeilen = [];
+  for (let k = 1; k <= 5; k++) {
+    const nk = ph < 0 ? Math.min(MAX_PHASE, 2 + k) : Math.min(MAX_PHASE, ph + k);
+    const a = s.risiko[nk];
+    const amTag = ohne * a;
+    ohne *= 1 - a;
+    zeilen.push(`<tr>
+      <td>${tagText(letzter.tag + k)}</td>
+      <td class="zahl">${fmt(p * Math.pow(s.q10, k))} – ${fmt(p * Math.pow(s.q90, k))}</td>
+      <td class="zahl" style="color:#fff">${fmt(p * Math.pow(s.q50, k))}</td>
+      <td class="zahl" style="color:#ef4444">${pz(amTag)}</td>
+      <td class="zahl" style="color:var(--accent)">${pz(ohne)}</td></tr>`);
+  }
+
+  box.innerHTML = `
+    <div class="prog-karten">
+      <div class="prog-karte"><span class="preis-label">${tagText(letzter.tag + 1)} · ${ph < 0 ? '' : (ph + 1) + '. Tag seit Absturz'}</span>
+        <span class="prog-gross">${fmt(erwartung)} <img src="${ICON_COIN}" class="coin-icon" alt=""></span>
+        <span class="prog-klein">Erwartungswert</span></div>
+      <div class="prog-karte"><span class="preis-label">Normal weiter (${pz(pN)})</span>
+        <span class="prog-mittel">${fmt(p * s.q10)} – ${fmt(p * s.q90)}</span>
+        <span class="prog-klein">meist um ${fmt(p * s.q50)}</span></div>
+      <div class="prog-karte"><span class="preis-label">Sprung (${pz(pS)})</span>
+        <span class="prog-mittel">ab ${fmt(p * GRENZE_SPRUNG)}</span>
+        <span class="prog-klein">im Schnitt ×${s.mittelSprung.toLocaleString('de-DE', { maximumFractionDigits: 1 })}</span></div>
+      <div class="prog-karte"><span class="preis-label" style="color:#ef4444">Absturz (${pz(pA)})</span>
+        <span class="prog-mittel">${fmt(s.crash10)} – ${fmt(s.crash90)}</span>
+        <span class="prog-klein">Neustart-Preis</span></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="besucher-tabelle">
+        <thead><tr><th>Tag</th><th class="zahl">Spanne ohne Absturz</th><th class="zahl">Mitte</th><th class="zahl">Absturz an dem Tag</th><th class="zahl">Bis dahin kein Absturz</th></tr></thead>
+        <tbody>${zeilen.join('')}</tbody>
+      </table>
+    </div>
+    <p class="prog-hinweis">Schätzung aus ${t.length} bisherigen Tagen (Basis: ${fmt(p)} am ${tagText(letzter.tag)}). Keine Garantie – Cytooxien würfelt.</p>`;
+}
+
+// ---------- Wert eintragen (nur Perfect2003, die Regeln prüfen das zusätzlich) ----------
+const bfOverlay = document.getElementById('backfillOverlay');
+const bfPreis = document.getElementById('backfillPrice');
+const bfFehler = document.getElementById('backfillFehler');
+document.getElementById('btnBackfillPrice').addEventListener('click', () => {
+  const d = new Date(), pad = (n) => String(n).padStart(2, '0');
+  document.getElementById('backfillDate').value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  document.getElementById('backfillTime').value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  bfPreis.value = ''; bfFehler.style.display = 'none';
+  bfOverlay.style.display = 'flex'; bfPreis.focus();
+});
+bfPreis.addEventListener('input', () => { const p = parsePreis(bfPreis.value); bfPreis.value = p ? fmt(p) : ''; });
+document.getElementById('btnBackfillAbbrechen').addEventListener('click', () => bfOverlay.style.display = 'none');
+bfOverlay.addEventListener('click', (e) => { if (e.target === bfOverlay) bfOverlay.style.display = 'none'; });
+document.getElementById('btnBackfillOk').addEventListener('click', async () => {
+  const fehler = (t) => { bfFehler.textContent = t; bfFehler.style.display = 'block'; };
+  const ds = document.getElementById('backfillDate').value, ts = document.getElementById('backfillTime').value || '12:00';
+  const preis = parsePreis(bfPreis.value);
+  if (!ds) return fehler('Bitte ein Datum wählen.');
+  if (!(preis > 0)) return fehler('Bitte einen gültigen Preis eingeben.');
+  const zeit = new Date(`${ds}T${ts}`).getTime();
+  if (isNaN(zeit)) return fehler('Ungültiges Datum.');
+  if (zeit > Date.now() + 60000) return fehler('Das Datum darf nicht in der Zukunft liegen.');
+  try { await addDoc(historyColRef, { price: preis, timestamp: zeit, sender: 'Perfect2003 (Website)' }); bfOverlay.style.display = 'none'; }
+  catch (err) { fehler('Speichern fehlgeschlagen: ' + err.message); }
+});
+
+// ---------- Anmelden ----------
+const loginOverlay = document.getElementById('loginOverlay');
+const loginFehler = document.getElementById('loginFehler');
+document.getElementById('btnAnmelden').addEventListener('click', () => {
+  loginFehler.style.display = 'none'; loginOverlay.style.display = 'flex';
+  document.getElementById('loginEmail').focus();
+});
+document.getElementById('btnLoginAbbrechen').addEventListener('click', () => loginOverlay.style.display = 'none');
+loginOverlay.addEventListener('click', (e) => { if (e.target === loginOverlay) loginOverlay.style.display = 'none'; });
+async function anmelden() {
+  loginFehler.style.display = 'none';
+  try {
+    await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value.trim(), document.getElementById('loginPasswort').value);
+    document.getElementById('loginPasswort').value = '';
+    loginOverlay.style.display = 'none';
+  } catch (err) {
+    loginFehler.textContent = 'Anmeldung fehlgeschlagen.'; loginFehler.style.display = 'block';
+  }
+}
+document.getElementById('btnLoginOk').addEventListener('click', anmelden);
+document.getElementById('loginPasswort').addEventListener('keydown', (e) => { if (e.key === 'Enter') anmelden(); });
+document.getElementById('btnAbmelden').addEventListener('click', () => signOut(auth));
+
+let besucherAbo = null;
+onAuthStateChanged(auth, (user) => {
+  istChef = !!user && user.uid === CHEF_UID;
+  document.body.classList.toggle('chef', istChef);
+  document.getElementById('btnAnmelden').style.display = istChef ? 'none' : '';
+  renderListe(gefiltert().slice().reverse());
+  if (user && !istChef) {
+    // Anderes Konto: hat keine Rechte -> gleich wieder abmelden.
+    signOut(auth);
+    alert('Dieses Konto darf hier nichts ändern.');
+  }
+  if (istChef && !besucherAbo) besucherAbo = onSnapshot(query(besucheRef, orderBy('zeit', 'desc'), limit(5000)), renderBesucher,
+    (err) => { document.getElementById('besucherListe').innerHTML = `<tr><td colspan="5" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; });
+  if (!istChef && besucherAbo) { besucherAbo(); besucherAbo = null; }
+});
+
+// ---------- Besucher ----------
+function geraetId() {
+  try {
+    let id = localStorage.getItem('preis_geraet');
+    if (!id) { id = Math.random().toString(36).slice(2, 12); localStorage.setItem('preis_geraet', id); }
+    return id;
+  } catch (e) { return 'ohne-speicher'; }
+}
+function geraetText() {
+  const ua = navigator.userAgent;
+  const geraet = /iPhone|Android.+Mobile/.test(ua) ? 'Handy' : /iPad|Android/.test(ua) ? 'Tablet' : 'PC';
+  const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Firefox\//.test(ua) ? 'Firefox'
+    : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+  return `${geraet} · ${browser}`;
+}
+function gespeicherterName() { try { return localStorage.getItem('preis_name') || ''; } catch (e) { return ''; } }
+
+// Einen Besuch pro Seitenaufruf zählen (eigene Besuche als Perfect2003 nicht).
+let besuchGezaehlt = false;
+async function besuchZaehlen() {
+  if (besuchGezaehlt) return;
+  besuchGezaehlt = true;
+  try { if (localStorage.getItem('preis_chef') === '1') return; } catch (e) {}
+  try {
+    await addDoc(besucheRef, { name: gespeicherterName().slice(0, 24), geraet: geraetId(), info: geraetText(), zeit: serverTimestamp() });
+  } catch (e) { console.warn('Besuch nicht gezählt:', e.message); }
+}
+
+function renderBesucher(snap) {
+  try { localStorage.setItem('preis_chef', '1'); } catch (e) {}
+  const gruppen = new Map();
+  snap.forEach(d => {
+    const x = d.data();
+    const z = x.zeit && x.zeit.toMillis ? x.zeit.toMillis() : 0;
+    const key = x.name ? 'n:' + x.name.toLowerCase() : 'g:' + x.geraet;
+    const g = gruppen.get(key) || { name: x.name || '', geraet: x.geraet, info: x.info || '', anzahl: 0, zuletzt: 0, zuerst: Infinity };
+    g.anzahl++; if (z > g.zuletzt) { g.zuletzt = z; g.info = x.info || g.info; } if (z && z < g.zuerst) g.zuerst = z;
+    gruppen.set(key, g);
+  });
+  const liste = [...gruppen.values()].sort((a, b) => b.zuletzt - a.zuletzt);
+  const dt = (ms) => ms && isFinite(ms) ? new Date(ms).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : '–';
+  document.getElementById('besucherSumme').textContent =
+    `${snap.size} Besuche · ${liste.filter(g => g.name).length} mit Namen · ${liste.filter(g => !g.name).length} anonyme Geräte`;
+  document.getElementById('besucherListe').innerHTML = liste.length ? liste.map(g => `<tr>
+      <td>${g.name ? esc(g.name) : `<span style="color:var(--muted)">anonym (${esc(g.geraet)})</span>`}</td>
+      <td class="zahl">${g.anzahl}</td><td>${dt(g.zuletzt)}</td><td>${dt(g.zuerst)}</td>
+      <td style="color:var(--muted)">${esc(g.info)}</td></tr>`).join('')
+    : '<tr><td colspan="5" style="color:var(--muted)">Noch keine Besuche.</td></tr>';
+}
+
+document.getElementById('btnBesucherLeeren').addEventListener('click', async () => {
+  if (!istChef || !confirm('Besucher-Liste wirklich komplett leeren? Das lässt sich nicht rückgängig machen.')) return;
+  const snap = await getDocs(besucheRef);
+  let batch = writeBatch(db), n = 0;
+  for (const d of snap.docs) { batch.delete(d.ref); if (++n % 400 === 0) { await batch.commit(); batch = writeBatch(db); } }
+  await batch.commit();
+});
+
+// ---------- Freiwilliger Name ----------
+const hinweis = document.getElementById('nameHinweis');
+const nameEingabe = document.getElementById('nameEingabe');
+function hinweisZeigen() { nameEingabe.value = gespeicherterName(); hinweis.style.display = 'flex'; }
+function hinweisFertig() { hinweis.style.display = 'none'; try { localStorage.setItem('preis_name_gefragt', '1'); } catch (e) {} besuchZaehlen(); }
+document.getElementById('btnNameJa').addEventListener('click', () => {
+  const n = nameEingabe.value.trim().replace(/[^A-Za-z0-9_]/g, '').slice(0, 24);
+  try { if (n) localStorage.setItem('preis_name', n); else localStorage.removeItem('preis_name'); } catch (e) {}
+  hinweisFertig();
+});
+nameEingabe.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btnNameJa').click(); });
+document.getElementById('btnNameNein').addEventListener('click', hinweisFertig);
+document.getElementById('btnNameAendern').addEventListener('click', hinweisZeigen);
+
+let schonGefragt = false;
+try { schonGefragt = localStorage.getItem('preis_name_gefragt') === '1'; } catch (e) {}
+if (schonGefragt) besuchZaehlen();
+else { hinweisZeigen(); setTimeout(() => { if (!besuchGezaehlt) besuchZaehlen(); }, 20000); }
+</script>
+</body>
+</html>
