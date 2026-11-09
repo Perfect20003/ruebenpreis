@@ -68,19 +68,23 @@
   .koenig-figur img { width: 60px; height: 120px; image-rendering: pixelated; display: block; }
   .koenig-figur .krone { position: absolute; left: 13px; top: -16px; width: 34px; height: 20px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
   #koenigName { font-weight: 700; color: var(--gold); font-size: 1.1rem; }
+
   .tipp-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .tipp-form input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; font-size: 0.9rem; outline: none; }
   .tipp-form input:focus { border-color: var(--accent); }
   .tipp-meldung { font-size: 0.82rem; margin-top: 8px; min-height: 1.2em; }
   .tipp-liste li .history-price { min-width: 0; }
+  .serie { font-size: 0.68rem; font-weight: 700; color: #f97316; background: rgba(249,115,22,.12); padding: 1px 6px; border-radius: 5px; white-space: nowrap; }
   .nur-chef-block { display: none; }
   body.chef .nur-chef-block { display: block; }
   @media (max-width: 600px) { .karte-rechts { margin-left: 0; } }
-  .sender-box[hidden] { display: none; }
+  .sender-box[hidden], .sender-klein[hidden] { display: none; }
+  .sender-klein { font-size: 0.85rem; }
+  #senderName { color: #fff; font-weight: 600; }
   .sender-box img { width: 64px; height: 64px; image-rendering: pixelated; border-radius: 6px; background: #151922; }
   .sender-text { display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; }
   .sender-text .muted { color: var(--muted); }
-  #senderName { font-weight: 700; color: #fff; font-size: 1.05rem; }
+
 
   .preis-meta .muted { color: var(--muted); }
 
@@ -134,6 +138,12 @@
   .prog-panel:not(.zu) .prog-zu-text { display: none; }
   .prog-panel.zu #prognoseInhalt { display: none; }
   .prog-panel.zu .history-header { margin-bottom: 0; }
+  .klapp-titel { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px; }
+  .klapp-titel:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+  .klapp:not(.zu) .prog-pfeil { transform: rotate(90deg); }
+  .klapp.zu > :not(.history-header) { display: none; }
+  .klapp.zu .history-header { margin-bottom: 0; }
+  .klapp.zu .history-header .history-tools, .klapp.zu .history-header .besucher-summe { display: none; }
   .history-empty { color: var(--muted); justify-content: center; }
   .history-delete-btn {
     background: none; color: var(--muted); cursor: pointer; font-size: 0.75rem; padding: 0 4px; line-height: 1;
@@ -242,6 +252,7 @@
     <div class="preis-meta">
       <span id="aktAenderung" class="muted">–</span>
       <span id="aktDatum" class="muted">–</span>
+      <span id="senderBox" class="muted sender-klein" hidden>gesendet von <span id="senderName"></span></span>
     </div>
     <div class="karte-rechts">
     <div class="koenig-box" id="koenigBox" hidden>
@@ -258,10 +269,7 @@
       </div>
       <div class="sender-text"><span class="muted" id="koenigTitel">Bester Tipp</span><span id="koenigName"></span><span class="muted" id="koenigInfo"></span></div>
     </div>
-    <div class="sender-box" id="senderBox" hidden>
-      <img id="senderKopf" alt="" width="64" height="64">
-      <div class="sender-text"><span class="muted">gesendet von</span><span id="senderName"></span></div>
-    </div>
+
     </div>
   </div>
 
@@ -325,9 +333,9 @@
     <div id="prognoseInhalt"><p class="prog-hinweis">Lade…</p></div>
   </section>
 
-  <section class="history-panel nur-chef" id="panelProgCheck" style="flex-direction:column;">
+  <section class="history-panel nur-chef klapp zu" id="panelProgCheck" style="flex-direction:column;">
     <div class="history-header">
-      <h2>Alte Prognosen <span style="color:var(--muted);font-weight:500;font-size:0.8rem;">(nur du siehst das)</span></h2>
+      <h2 class="klapp-titel" tabindex="0" role="button" aria-expanded="false"><span class="prog-pfeil" aria-hidden="true">▸</span> Alte Prognosen <span style="color:var(--muted);font-weight:500;font-size:0.8rem;">(nur du siehst das)</span></h2>
       <span class="besucher-summe" id="progCheckSumme">–</span>
     </div>
     <div style="overflow-x:auto; max-height:420px; overflow-y:auto;">
@@ -339,9 +347,35 @@
     <p class="prog-hinweis">So hätte die Prognose an dem Tag ausgesehen – berechnet nur aus den Preisen bis zum Vortag.</p>
   </section>
 
-  <section class="history-panel nur-chef" id="panelBesucher" style="flex-direction:column;">
+  <section class="history-panel nur-chef klapp zu" id="panelTipper" style="flex-direction:column;">
     <div class="history-header">
-      <h2>Besucher <span style="color:var(--muted);font-weight:500;font-size:0.8rem;">(nur du siehst das)</span></h2>
+      <h2 class="klapp-titel" tabindex="0" role="button" aria-expanded="false"><span class="prog-pfeil" aria-hidden="true">▸</span> Tipper <span style="color:var(--muted);font-weight:500;font-size:0.8rem;">(nur du siehst das)</span></h2>
+      <span class="besucher-summe" id="tipperSumme">–</span>
+    </div>
+    <div style="overflow-x:auto; max-height:360px; overflow-y:auto;">
+      <table class="besucher-tabelle">
+        <thead><tr><th>Name</th><th class="zahl">Tipps</th><th class="zahl">Serie</th><th class="zahl">Kronen</th><th class="zahl">Ø daneben</th><th>Zuletzt getippt</th></tr></thead>
+        <tbody id="tipperListe"><tr><td colspan="6" style="color:var(--muted)">Lade…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="history-panel nur-chef klapp zu" id="panelModNutzer" style="flex-direction:column;">
+    <div class="history-header">
+      <h2 class="klapp-titel" tabindex="0" role="button" aria-expanded="false"><span class="prog-pfeil" aria-hidden="true">▸</span> Mod-Nutzer <span style="color:var(--muted);font-weight:500;font-size:0.8rem;">(nur du siehst das)</span></h2>
+      <span class="besucher-summe" id="modNutzerSumme">–</span>
+    </div>
+    <div style="overflow-x:auto; max-height:360px; overflow-y:auto;">
+      <table class="besucher-tabelle">
+        <thead><tr><th>Name</th><th class="zahl">Tage aktiv</th><th>Zuerst</th><th>Zuletzt</th><th>Version</th></tr></thead>
+        <tbody id="modNutzerListe"><tr><td colspan="5" style="color:var(--muted)">Lade…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="history-panel nur-chef klapp zu" id="panelBesucher" style="flex-direction:column;">
+    <div class="history-header">
+      <h2 class="klapp-titel" tabindex="0" role="button" aria-expanded="false"><span class="prog-pfeil" aria-hidden="true">▸</span> Besucher <span style="color:var(--muted);font-weight:500;font-size:0.8rem;">(nur du siehst das)</span></h2>
       <div class="history-tools">
         <span class="besucher-summe" id="besucherSumme">–</span>
         <button class="btn-clear-history" id="btnBesucherLeeren">Liste leeren</button>
@@ -486,12 +520,14 @@ function renderAlles() {
   renderAktuell();
   renderListe(gefiltert().slice().reverse());
   tippAbosPruefen(); renderTipps();
+  modNutzerPruefen();
   try { renderProgCheck(); } catch (e) { console.error(e); }
   renderChart(gefiltert());
   renderDurchschnitt();
   try { renderPrognose(); } catch (e) { console.error(e); }
   try { renderTipps(); } catch (e) { console.error(e); }
   try { renderProgCheck(); } catch (e) { console.error(e); }
+  try { renderTipper(); } catch (e) { console.error(e); }
 }
 
 function renderAktuell() {
@@ -507,12 +543,11 @@ function renderAktuell() {
   const box = document.getElementById('senderBox');
   const roh = (letzter.sender || '').replace(/\s*\(.*\)$/, '').trim();
   if (roh && /^[A-Za-z0-9_]{3,16}$/.test(roh)) {
-    const id = /^[0-9a-f-]{32,36}$/i.test(letzter.uuid || '') ? letzter.uuid.replace(/-/g, '') : roh;
-    const img = document.getElementById('senderKopf');
-    const url = 'https://mc-heads.net/avatar/' + encodeURIComponent(id) + '/64';
-    if (img.getAttribute('src') !== url) { img.onerror = () => { img.style.visibility = 'hidden'; }; img.style.visibility = ''; img.src = url; }
-    img.alt = 'Kopf von ' + roh;
-    document.getElementById('senderName').textContent = roh;
+    const sEl = document.getElementById('senderName');
+    if (sEl.textContent !== roh) {
+      sEl.textContent = roh; sEl.style.color = '';
+      rangVon(roh).then(r => { if (r && r.farbe && sEl.textContent === roh) sEl.style.color = r.farbe; });
+    }
     box.hidden = false;
   } else {
     box.hidden = true;
@@ -895,6 +930,88 @@ let tippsMorgenChef = [];     // nur fuer dich: schon abgegebene Tipps fuer morg
 
 function heuteMs() { return tagMsVon(berlinTag(Date.now())); }
 
+// Tipp-Serie: an wie vielen Tagen am Stück jemand getippt hat (bis heute bzw. morgen).
+let vergangeneTipps = [], aboVergangen = null, aboVergangenTag = 0;
+function vergangeneAbo() {
+  const h = heuteMs();
+  if (h === aboVergangenTag) return;
+  aboVergangenTag = h;
+  if (aboVergangen) aboVergangen();
+  aboVergangen = onSnapshot(query(tippsRef, where('tagMs', '<=', h)), (snap) => {
+    vergangeneTipps = []; snap.forEach(d => { const x = d.data(); if (x.name) vergangeneTipps.push({ name: x.name, tagMs: x.tagMs }); });
+    renderTipps();
+  }, () => {});
+}
+function tippTage(name) {
+  const k = name.toLowerCase(), s = new Set();
+  for (const x of vergangeneTipps) if (x.name.toLowerCase() === k) s.add(x.tagMs);
+  for (const x of alleTipps) if (x.name.toLowerCase() === k) s.add(x.tagMs);       // fuer dich: auch morgen
+  for (const x of tippsMorgenChef) if (x.name.toLowerCase() === k) s.add(x.tagMs);
+  try { // eigener Tipp fuer morgen (im Browser gemerkt)
+    const morgen = heuteMs() + 864e5;
+    if (localStorage.getItem('preis_tipp_' + morgen) && (localStorage.getItem('preis_name') || '').toLowerCase() === k) s.add(morgen);
+  } catch (e) {}
+  return s;
+}
+function serie(name) {
+  const s = tippTage(name);
+  let tag = heuteMs() + 864e5;
+  if (!s.has(tag)) tag -= 864e5;      // fuer morgen noch nicht getippt -> Serie bis heute zaehlen
+  let n = 0;
+  while (s.has(tag)) { n++; tag -= 864e5; }
+  return n;
+}
+const serieText = (n) => n >= 2 ? `<span class="serie" title="${n} Tage in Folge getippt">${n} Tage in Folge</span>` : '';
+
+// Nur fuer dich: alle Tipps aller Tage -> wer wie oft getippt hat und wie oft er die Krone hatte.
+let alleTipps = [], aboAlle = null;
+function alleTippsAbo() {
+  if (istChef && !aboAlle) aboAlle = onSnapshot(query(tippsRef, orderBy('tagMs', 'desc'), limit(10000)), (snap) => {
+    alleTipps = []; snap.forEach(d => { const x = d.data(); if (x.name && x.tipp > 0) alleTipps.push(x); });
+    renderTipper();
+  }, () => {});
+  if (!istChef && aboAlle) { aboAlle(); aboAlle = null; alleTipps = []; }
+}
+function renderTipper() {
+  if (!istChef) return;
+  // echter Preis je Tag (letzter Eintrag dieses Berlin-Datums)
+  const echtAm = new Map();
+  for (const e of eintraegeAsc) echtAm.set(tagMsVon(berlinTag(e.timestamp)), e.price);
+  const zeit = (x) => x.zeit && x.zeit.toMillis ? x.zeit.toMillis() : 0;
+  const tage = new Map();
+  for (const x of alleTipps) { if (!tage.has(x.tagMs)) tage.set(x.tagMs, []); tage.get(x.tagMs).push(x); }
+  const leute = new Map();
+  const person = (name) => {
+    const k = name.toLowerCase();
+    if (!leute.has(k)) leute.set(k, { name, tipps: 0, kronen: 0, abwSumme: 0, abwN: 0, zuletzt: 0 });
+    return leute.get(k);
+  };
+  for (const [tag, liste] of tages(tage)) {
+    const echt = echtAm.get(tag);
+    let best = null;
+    for (const x of liste) {
+      const p = person(x.name);
+      p.tipps++; p.zuletzt = Math.max(p.zuletzt, zeit(x) || tag);
+      if (echt != null) {
+        p.abwSumme += Math.abs(x.tipp - echt) / echt; p.abwN++;
+        if (!best || Math.abs(x.tipp - echt) < Math.abs(best.tipp - echt) || (Math.abs(x.tipp - echt) === Math.abs(best.tipp - echt) && zeit(x) < zeit(best))) best = x;
+      }
+    }
+    if (best) person(best.name).kronen++;
+  }
+  const l = [...leute.values()].sort((a, b) => b.tipps - a.tipps || b.kronen - a.kronen);
+  document.getElementById('tipperSumme').textContent = `${alleTipps.length} Tipps von ${l.length} Leuten an ${tage.size} Tagen`;
+  document.getElementById('tipperListe').innerHTML = l.length ? l.map(p => `<tr>
+      <td style="color:#fff;font-weight:600">${esc(p.name)}</td>
+      <td class="zahl">${p.tipps}</td>
+      <td class="zahl" style="color:#f97316">${serie(p.name) || ''}</td>
+      <td class="zahl" style="color:var(--gold);font-weight:700">${p.kronen || ''}</td>
+      <td class="zahl" style="color:var(--muted)">${p.abwN ? (p.abwSumme / p.abwN * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' %' : '–'}</td>
+      <td style="color:var(--muted)">${p.zuletzt ? new Date(p.zuletzt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : '–'}</td></tr>`).join('')
+    : '<tr><td colspan="6" style="color:var(--muted)">Noch keine Tipps.</td></tr>';
+}
+function tages(m) { return [...m.entries()]; }
+
 function tippAbo(tagMs, ziel) {
   return onSnapshot(query(tippsRef, where('tagMs', '==', tagMs)), (snap) => {
     const l = []; snap.forEach(d => { const x = d.data(); if (x.name && x.tipp > 0) l.push({ ...x, _id: d.id }); });
@@ -908,9 +1025,11 @@ function tippAbosPruefen() {
     aboHeuteTag = h;
     if (aboHeute) aboHeute();
     aboHeute = tippAbo(h, (l) => tippsHeute = l);
+    vergangeneAbo();
     if (aboMorgen) { aboMorgen(); aboMorgen = null; }
   }
   if (istChef && !aboMorgen) aboMorgen = tippAbo(h + 864e5, (l) => tippsMorgenChef = l);
+  alleTippsAbo();
   if (!istChef && aboMorgen) { aboMorgen(); aboMorgen = null; tippsMorgenChef = []; }
 }
 setInterval(tippAbosPruefen, 60000);
@@ -955,13 +1074,33 @@ function tippZeilen(sortiert, echt) {
     const doppelt = x.geraet && geraeteZahl[x.geraet] > 1;
     return `<li>
       <span style="width:18px;color:${i === 0 && echt != null ? 'var(--gold)' : 'var(--muted)'};font-weight:700;">${echt != null ? (i + 1) + '.' : ''}</span>
-      <span style="color:#fff;font-weight:600;overflow:hidden;text-overflow:ellipsis;">${esc(x.name)}</span>
+      <span style="color:#fff;font-weight:600;overflow:hidden;text-overflow:ellipsis;">${esc(x.name)}</span>${serieText(serie(x.name))}
       ${istChef && x.geraet ? `<span title="Gerät${doppelt ? ' - mehrere Tipps vom selben Gerät!' : ''}" style="font-size:0.7rem;color:${doppelt ? 'var(--warning)' : 'var(--muted)'};font-weight:${doppelt ? 700 : 400}">${esc(x.geraet)}${doppelt ? ' ⚠' : ''}</span>` : ''}
       <span class="history-price" style="margin-left:auto">${fmt(x.tipp)} <img src="${ICON_COIN}" class="coin-icon" alt=""></span>
       ${abw != null ? `<span class="history-change" style="color:var(--muted);min-width:52px;text-align:right">${abw > 0 ? '+' : ''}${abw.toLocaleString('de-DE', { maximumFractionDigits: 1 })}%</span>` : ''}
       ${istChef ? `<button class="history-delete-btn" data-tipp="${esc(x._id)}" title="Tipp löschen" aria-label="Tipp löschen">✕</button>` : ''}
     </li>`;
   }).join('');
+}
+
+// Cytooxien-Rang eines Spielers (api.cytooxien.de/user/<name>), gecacht.
+const MC_FARBEN = { '0': '#000000', '1': '#0000aa', '2': '#00aa00', '3': '#00aaaa', '4': '#aa0000', '5': '#aa00aa', '6': '#ffaa00', '7': '#aaaaaa',
+  '8': '#555555', '9': '#5555ff', 'a': '#55ff55', 'b': '#55ffff', 'c': '#ff5555', 'd': '#ff55ff', 'e': '#ffff55', 'f': '#ffffff' };
+function mcFarbe(code) {
+  if (!code) return null;
+  const hex = code.match(/§x((?:§[0-9a-fA-F]){6})/);
+  if (hex) return '#' + hex[1].replace(/§/g, '');
+  const m = code.match(/§([0-9a-fA-F])(?![\s\S]*§[0-9a-fA-F])/);
+  return m ? MC_FARBEN[m[1].toLowerCase()] : null;
+}
+const rangCache = new Map();
+function rangVon(name) {
+  const key = name.toLowerCase();
+  if (!rangCache.has(key)) rangCache.set(key, fetch('https://api.cytooxien.de/user/' + encodeURIComponent(name))
+    .then(r => r.ok ? r.json() : null)
+    .then(j => j && j.playerInfo ? { name: (j.playerInfo.rank && j.playerInfo.rank.name) || '', farbe: mcFarbe(j.playerInfo.rank && j.playerInfo.rank.color) || mcFarbe(j.playerInfo.coloredName) } : null)
+    .catch(() => null));
+  return rangCache.get(key);
 }
 
 // Krone: bester Tipp von heute, sobald der echte Preis da ist
@@ -973,7 +1112,11 @@ function koenigZeigen(sortiert, echt) {
     const url = 'https://mc-heads.net/player/' + encodeURIComponent(k.name) + '/60';
     if (img.getAttribute('src') !== url) { img.onerror = () => { img.style.visibility = 'hidden'; }; img.style.visibility = ''; img.src = url; }
     img.alt = 'Skin von ' + k.name;
-    document.getElementById('koenigName').textContent = k.name;
+    const nameEl = document.getElementById('koenigName');
+    if (nameEl.textContent !== k.name) {
+      nameEl.textContent = k.name; nameEl.style.color = '';
+      rangVon(k.name).then(r => { if (r && r.farbe && nameEl.textContent === k.name) nameEl.style.color = r.farbe; });
+    }
     const abw = (k.tipp - echt) / echt * 100;
     document.getElementById('koenigInfo').textContent =
       `Tipp ${fmt(k.tipp)} (${abw > 0 ? '+' : ''}${abw.toLocaleString('de-DE', { maximumFractionDigits: 1 })} %)`;
@@ -996,9 +1139,11 @@ document.getElementById('btnTipp').addEventListener('click', async () => {
   if (schon) return meldung(`Von diesem Gerät gab es schon einen Tipp für morgen (${fmt(Number(schon))}).`);
   try {
     await setDoc(doc(db, 'preisTipps', tagMs + '_' + name.toLowerCase()), { name, tipp: preis, tagMs, zeit: serverTimestamp(), geraet: geraetId() });
-    try { localStorage.setItem('preis_name', name); localStorage.setItem('preis_tipp_' + tagMs, String(preis)); } catch (e) {}
+    try { localStorage.setItem('preis_name', name); localStorage.setItem('preis_name_gefragt', '1'); localStorage.setItem('preis_tipp_' + tagMs, String(preis)); } catch (e) {}
+    document.getElementById('nameHinweis').style.display = 'none';
     tippPreis.value = '';
-    meldung(`Dein Tipp für ${tagText(Math.round(tagMs / 864e5))}: ${fmt(preis)} – viel Glück!`, true);
+    const s = serie(name);
+    meldung(`Dein Tipp für ${tagText(Math.round(tagMs / 864e5))}: ${fmt(preis)} – viel Glück!` + (s >= 2 ? ` Das ist dein ${s}. Tag in Folge.` : ''), true);
   } catch (err) {
     meldung(err.code === 'permission-denied'
       ? 'Für diesen Namen gibt es schon einen Tipp für morgen (oder die Abgabe ist vorbei).'
@@ -1012,12 +1157,49 @@ try {
 } catch (e) {}
 tippAbosPruefen();
 
+// Bereiche fuer dich ein-/ausklappen (starten eingeklappt)
+document.querySelectorAll('.klapp-titel').forEach(h => {
+  const umschalten = () => {
+    const zu = h.closest('.klapp').classList.toggle('zu');
+    h.setAttribute('aria-expanded', String(!zu));
+  };
+  h.addEventListener('click', umschalten);
+  h.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); umschalten(); } });
+});
+
 // Prognose ein-/ausklappen (startet immer eingeklappt)
 document.getElementById('btnPrognose').addEventListener('click', () => {
   const p = document.getElementById('panelPrognose');
   const zu = p.classList.toggle('zu');
   document.getElementById('btnPrognose').setAttribute('aria-expanded', String(!zu));
 });
+
+// ---------- Mod-Nutzer (nur fuer dich) ----------
+let modNutzerAbo = null;
+function modNutzerPruefen() {
+  if (istChef && !modNutzerAbo) modNutzerAbo = onSnapshot(query(collection(db, 'ruebenpreisNutzer'), orderBy('zeit', 'desc'), limit(10000)), (snap) => {
+    const leute = new Map();
+    snap.forEach(d => {
+      const x = d.data(); if (!x.uuid) return;
+      const p = leute.get(x.uuid) || { name: x.name, version: x.version, tage: new Set(), zuerst: Infinity, zuletzt: 0 };
+      p.tage.add(x.tagMs);
+      if (x.zeit > p.zuletzt) { p.zuletzt = x.zeit; p.name = x.name; p.version = x.version; }
+      if (x.zeit < p.zuerst) p.zuerst = x.zeit;
+      leute.set(x.uuid, p);
+    });
+    const l = [...leute.values()].sort((a, b) => b.zuletzt - a.zuletzt);
+    const neueste = l.reduce((v, p) => (p.version > v ? p.version : v), '');
+    const dt = (ms) => ms && isFinite(ms) ? new Date(ms).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : '–';
+    const heuteAktiv = l.filter(p => p.tage.has(heuteMs())).length;
+    document.getElementById('modNutzerSumme').textContent = `${l.length} Accounts · heute aktiv: ${heuteAktiv}`;
+    document.getElementById('modNutzerListe').innerHTML = l.length ? l.map(p => `<tr>
+        <td style="color:#fff;font-weight:600">${esc(p.name)}</td>
+        <td class="zahl">${p.tage.size}</td><td>${dt(p.zuerst)}</td><td>${dt(p.zuletzt)}</td>
+        <td style="color:${p.version === neueste ? 'var(--muted)' : 'var(--gold)'}">${esc(p.version || '?')}${p.version !== neueste ? ' (alt)' : ''}</td></tr>`).join('')
+      : '<tr><td colspan="5" style="color:var(--muted)">Noch niemand gemeldet.</td></tr>';
+  }, (err) => { document.getElementById('modNutzerListe').innerHTML = `<tr><td colspan="5" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; });
+  if (!istChef && modNutzerAbo) { modNutzerAbo(); modNutzerAbo = null; }
+}
 
 // ---------- Wert eintragen (nur Perfect2003, die Regeln prüfen das zusätzlich) ----------
 const bfOverlay = document.getElementById('backfillOverlay');
@@ -1152,6 +1334,7 @@ function hinweisFertig() { hinweis.style.display = 'none'; try { localStorage.se
 document.getElementById('btnNameJa').addEventListener('click', () => {
   const n = nameEingabe.value.trim().replace(/[^A-Za-z0-9_]/g, '').slice(0, 24);
   try { if (n) localStorage.setItem('preis_name', n); else localStorage.removeItem('preis_name'); } catch (e) {}
+  const tf = document.getElementById('tippName'); if (tf && n) tf.value = n;
   hinweisFertig();
 });
 nameEingabe.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btnNameJa').click(); });
