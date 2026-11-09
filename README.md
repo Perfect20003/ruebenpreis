@@ -2,7 +2,7 @@
 
 Hier seht ihr den aktuellen Rübenpreis von Cytooxien und wie er sich entwickelt hat.
 
-**Seite:** https://perfect20003.github.io/ruebenpreis/
+**Seite:** https://ruebenpreis.de
 
 ## Was gibts da
 
