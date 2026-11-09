@@ -13,7 +13,7 @@ Hier seht ihr den aktuellen Rübenpreis von Cytooxien und wie er sich entwickelt
 
 ## Wie kommen die Preise rein
 
-Über meine Mod **Rübenpreis** (Fabric, 26.2 / 26.3). Wer sie drauf hat und das Hogy-Menü öffnet, trägt automatisch den Preis vom Tag ein, falls das heute noch keiner gemacht hat. Mit `/ruebenpreis` seht ihr den aktuellen Stand.
+Über meine Mod **Ruebenpreis** (Fabric, 26.2 / 26.3). Wer sie drauf hat und das Hogy-Menü öffnet, trägt automatisch den Preis vom Tag ein, falls das heute noch keiner gemacht hat. Mit `/ruebenpreis` seht ihr den aktuellen Stand.
 
 Mod gibts bei mir.
 
