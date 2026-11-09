@@ -392,8 +392,8 @@
 
 <footer>
   Preise von Cytooxien · Made by <a class="fuss-link" href="https://discord.com/users/391316333800718341" target="_blank" rel="noopener" title="Perfect2003 auf Discord schreiben">Perfect2003</a> ·
-  <button id="btnNameAendern">Namen angeben/ändern</button> ·
-  <button id="btnAnmelden">Anmelden</button>
+  <button id="btnNameAendern">Namen angeben/ändern</button><span id="anmeldenTeil" style="display:none"> ·
+  <button id="btnAnmelden">Anmelden</button></span>
 </footer>
 
 <!-- Vollbild-Verlauf -->
@@ -1231,6 +1231,18 @@ document.getElementById('btnBackfillOk').addEventListener('click', async () => {
 // ---------- Anmelden ----------
 const loginOverlay = document.getElementById('loginOverlay');
 const loginFehler = document.getElementById('loginFehler');
+// Anmelden-Knopf sehen nur Geraete, auf denen du dich schon mal angemeldet hast,
+// oder wer die Seite mit #login am Ende oeffnet (ruebenpreis.de/#login).
+function anmeldenErlaubt() {
+  if (location.hash === '#login') return true;
+  try { return localStorage.getItem('preis_chef_geraet') === '1'; } catch (e) { return false; }
+}
+function loginOeffnen() {
+  loginFehler.style.display = 'none'; loginOverlay.style.display = 'flex';
+  document.getElementById('loginEmail').focus();
+}
+if (location.hash === '#login') setTimeout(loginOeffnen, 0);
+window.addEventListener('hashchange', () => { if (location.hash === '#login' && !istChef) { document.getElementById('anmeldenTeil').style.display = ''; loginOeffnen(); } });
 document.getElementById('btnAnmelden').addEventListener('click', () => {
   loginFehler.style.display = 'none'; loginOverlay.style.display = 'flex';
   document.getElementById('loginEmail').focus();
@@ -1247,6 +1259,7 @@ async function anmelden() {
       loginFehler.textContent = 'Dieses Konto darf hier nichts ändern.'; loginFehler.style.display = 'block';
       return;
     }
+    try { localStorage.setItem('preis_chef_geraet', '1'); } catch (e) {}
     loginOverlay.style.display = 'none';
   } catch (err) {
     loginFehler.textContent = 'Anmeldung fehlgeschlagen.'; loginFehler.style.display = 'block';
@@ -1260,8 +1273,10 @@ let besucherAbo = null;
 onAuthStateChanged(auth, (user) => {
   istChef = !!user && user.uid === CHEF_UID;
   document.body.classList.toggle('chef', istChef);
-  document.getElementById('btnAnmelden').style.display = istChef ? 'none' : '';
-  renderListe(gefiltert().slice().reverse());
+  document.getElementById('anmeldenTeil').style.display = (!istChef && anmeldenErlaubt()) ? '' : 'none';
+  if (istChef) { try { localStorage.setItem('preis_chef_geraet', '1'); } catch (e) {} }
+  // Alles neu zeichnen, damit deine Bereiche (Alte Prognosen, Tipper, Mod-Nutzer) auch nach spaetem Login gefuellt werden.
+  if (eintraegeAsc.length) renderAlles(); else renderListe(gefiltert().slice().reverse());
   // Anonyme Anmeldung (kommt von der Hauptseite auf derselben Adresse) einfach ignorieren - kein Popup.
   if (istChef && !besucherAbo) besucherAbo = onSnapshot(query(besucheRef, orderBy('zeit', 'desc'), limit(5000)), renderBesucher,
     (err) => { document.getElementById('besucherListe').innerHTML = `<tr><td colspan="5" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; });
