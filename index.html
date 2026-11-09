@@ -1191,7 +1191,8 @@ function modNutzerPruefen() {
       leute.set(x.uuid, p);
     });
     const l = [...leute.values()].sort((a, b) => b.zuletzt - a.zuletzt);
-    const neueste = l.reduce((v, p) => (p.version > v ? p.version : v), '');
+    // Neueste Version = die zuletzt gemeldete (so klappt es auch, wenn die Nummer mal zurueckgesetzt wird)
+    const neueste = l.length ? l[0].version : '';
     const dt = (ms) => ms && isFinite(ms) ? new Date(ms).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : '–';
     const heuteAktiv = l.filter(p => p.tage.has(heuteMs())).length;
     document.getElementById('modNutzerSumme').textContent = `${l.length} Accounts · heute aktiv: ${heuteAktiv}`;
