@@ -385,8 +385,8 @@
     </div>
     <div style="overflow-x:auto;">
       <table class="besucher-tabelle">
-        <thead><tr><th>Name</th><th class="zahl">Besuche</th><th>Zuletzt</th><th>Zuerst</th><th>Gerät</th></tr></thead>
-        <tbody id="besucherListe"><tr><td colspan="5" style="color:var(--muted)">Lade…</td></tr></tbody>
+        <thead><tr><th>Name</th><th class="zahl">Besuche</th><th class="zahl">Zeit gesamt</th><th class="zahl">Ø pro Besuch</th><th>Zuletzt</th><th>Zuerst</th><th>Gerät</th></tr></thead>
+        <tbody id="besucherListe"><tr><td colspan="7" style="color:var(--muted)">Lade…</td></tr></tbody>
       </table>
     </div>
   </section>
@@ -470,7 +470,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, query, orderBy, limit, getDocs, writeBatch, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, updateDoc, deleteDoc, query, orderBy, limit, getDocs, writeBatch, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // Diese Werte sind NICHT geheim (Firebase-Web-Konfiguration). Geschützt wird alles über die
@@ -1283,7 +1283,7 @@ onAuthStateChanged(auth, (user) => {
   if (eintraegeAsc.length) renderAlles(); else renderListe(gefiltert().slice().reverse());
   // Anonyme Anmeldung (kommt von der Hauptseite auf derselben Adresse) einfach ignorieren - kein Popup.
   if (istChef && !besucherAbo) besucherAbo = onSnapshot(query(besucheRef, orderBy('zeit', 'desc'), limit(5000)), renderBesucher,
-    (err) => { document.getElementById('besucherListe').innerHTML = `<tr><td colspan="5" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; });
+    (err) => { document.getElementById('besucherListe').innerHTML = `<tr><td colspan="7" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; });
   if (!istChef && besucherAbo) { besucherAbo(); besucherAbo = null; }
 });
 
@@ -1311,8 +1311,39 @@ async function besuchZaehlen() {
   besuchGezaehlt = true;
   try { if (localStorage.getItem('preis_chef') === '1') return; } catch (e) {}
   try {
-    await addDoc(besucheRef, { name: gespeicherterName().slice(0, 24), geraet: geraetId(), info: geraetText(), zeit: serverTimestamp() });
+    const ref = await addDoc(besucheRef, { name: gespeicherterName().slice(0, 24), geraet: geraetId(), info: geraetText(), zeit: serverTimestamp() });
+    dauerMessen(ref);
   } catch (e) { console.warn('Besuch nicht gezählt:', e.message); }
+}
+
+// Verweildauer: zaehlt nur, solange der Tab sichtbar ist. Wird regelmaessig nachgetragen
+// (erste 5 Minuten alle 30 s, danach jede Minute, hoechstens 3 Stunden).
+function dauerMessen(ref) {
+  let sichtbar = 0, seit = document.visibilityState === 'visible' ? Date.now() : 0, gemeldet = 0, letzteMeldung = Date.now();
+  const sekunden = () => Math.floor((sichtbar + (seit ? Date.now() - seit : 0)) / 1000);
+  const melden = () => {
+    const s = Math.min(sekunden(), 10800);
+    if (s <= gemeldet) return;
+    gemeldet = s; letzteMeldung = Date.now();
+    updateDoc(ref, { dauer: s }).catch(() => {});
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { if (!seit) seit = Date.now(); }
+    else { if (seit) { sichtbar += Date.now() - seit; seit = 0; } melden(); }
+  });
+  window.addEventListener('pagehide', melden);
+  setInterval(() => {
+    if (!seit) return;
+    const takt = sekunden() < 300 ? 30000 : 60000;
+    if (Date.now() - letzteMeldung >= takt - 1000) melden();
+  }, 10000);
+}
+function dauerText(s) {
+  if (!(s > 0)) return '–';
+  if (s < 60) return s + ' s';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + ' min' + (s % 60 && m < 10 ? ' ' + (s % 60) + ' s' : '');
+  return Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
 }
 
 function renderBesucher(snap) {
@@ -1322,8 +1353,8 @@ function renderBesucher(snap) {
     const x = d.data();
     const z = x.zeit && x.zeit.toMillis ? x.zeit.toMillis() : 0;
     const key = x.name ? 'n:' + x.name.toLowerCase() : 'g:' + x.geraet;
-    const g = gruppen.get(key) || { name: x.name || '', geraet: x.geraet, info: x.info || '', anzahl: 0, zuletzt: 0, zuerst: Infinity };
-    g.anzahl++; if (z > g.zuletzt) { g.zuletzt = z; g.info = x.info || g.info; } if (z && z < g.zuerst) g.zuerst = z;
+    const g = gruppen.get(key) || { name: x.name || '', geraet: x.geraet, info: x.info || '', anzahl: 0, zuletzt: 0, zuerst: Infinity, dauer: 0, mitDauer: 0 };
+    g.anzahl++; if (x.dauer > 0) { g.dauer += x.dauer; g.mitDauer++; } if (z > g.zuletzt) { g.zuletzt = z; g.info = x.info || g.info; } if (z && z < g.zuerst) g.zuerst = z;
     gruppen.set(key, g);
   });
   const liste = [...gruppen.values()].sort((a, b) => b.zuletzt - a.zuletzt);
@@ -1332,9 +1363,12 @@ function renderBesucher(snap) {
     `${snap.size} Besuche · ${liste.filter(g => g.name).length} mit Namen · ${liste.filter(g => !g.name).length} anonyme Geräte`;
   document.getElementById('besucherListe').innerHTML = liste.length ? liste.map(g => `<tr>
       <td>${g.name ? esc(g.name) : `<span style="color:var(--muted)">anonym (${esc(g.geraet)})</span>`}</td>
-      <td class="zahl">${g.anzahl}</td><td>${dt(g.zuletzt)}</td><td>${dt(g.zuerst)}</td>
+      <td class="zahl">${g.anzahl}</td>
+      <td class="zahl">${dauerText(g.dauer)}</td>
+      <td class="zahl" style="color:var(--muted)">${g.mitDauer ? dauerText(Math.round(g.dauer / g.mitDauer)) : '–'}</td>
+      <td>${dt(g.zuletzt)}</td><td>${dt(g.zuerst)}</td>
       <td style="color:var(--muted)">${esc(g.info)}</td></tr>`).join('')
-    : '<tr><td colspan="5" style="color:var(--muted)">Noch keine Besuche.</td></tr>';
+    : '<tr><td colspan="7" style="color:var(--muted)">Noch keine Besuche.</td></tr>';
 }
 
 document.getElementById('btnBesucherLeeren').addEventListener('click', async () => {
