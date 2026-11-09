@@ -54,12 +54,12 @@ const name = neu.sender.replace(/\s*\(.*\)$/, '').trim();
 
 // Eine einzige Nachricht (ohne Karte), damit der Rollen-Ping ganz unten stehen kann.
 const zeilen = [
-  `**Datum: ${d}.${m}.${j} | ${status}**`,
+  `### Datum: ${d}.${m}.${j} | ${status}`,
   linie,
   `# Aktueller Preis: ${zahl(neu.preis)} Taler`,
   alt ? `Seit gestern: **[${vz}${prozent.toFixed(2)}% - ${zahl(alt.preis)}]**` : 'Seit gestern: erster Eintrag',
   linie,
-  `-# [Verlauf, Prognose & Tippspiel auf ruebenpreis.de](<${WEBSITE}>)` + (/^[A-Za-z0-9_]{3,16}$/.test(name) ? ` · gesendet von ${name}` : '')
+  `-# [Verlauf, Prognose & Tippspiel auf ruebenpreis.de](<${WEBSITE}>) · Made by Perfect2003`
 ];
 if (ROLLE) zeilen.push(`||<@&${ROLLE}>||`);
 
