@@ -1,0 +1,42 @@
+name: Rübenpreis nach Discord
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # alle 10 Minuten nachsehen, ob es einen neuen Preis gibt
+  workflow_dispatch:
+    inputs:
+      erzwingen:
+        description: 'Nochmal posten, auch wenn heute schon gepostet wurde'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: discord-preis
+  cancel-in-progress: false
+
+jobs:
+  posten:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Preis posten
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          DISCORD_ROLE_ID: ${{ vars.DISCORD_ROLE_ID }}
+          ERZWINGEN: ${{ inputs.erzwingen }}
+        run: node discord/post.mjs
+      - name: Merken, dass heute gepostet wurde
+        run: |
+          if [ -n "$(git status --porcelain discord/zuletzt-gepostet.txt)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add discord/zuletzt-gepostet.txt
+            git commit -m "Discord: Preis gepostet"
+            git push
+          fi
