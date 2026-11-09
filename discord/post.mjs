@@ -53,13 +53,12 @@ const linie = '-'.repeat(28);
 const name = neu.sender.replace(/\s*\(.*\)$/, '').trim();
 
 const embed = {
-  title: `Datum: ${d}.${m}.${j} | ${status}`,
-  url: WEBSITE,
   color: farbe,
   description: [
+    `## [Datum: ${d}.${m}.${j} | ${status}](${WEBSITE})`,
     linie,
-    `Aktueller Preis: **${zahl(neu.preis)} Taler**`,
-    alt ? `Seit gestern: **[${vz}${prozent.toFixed(2)}% - ${zahl(alt.preis)}]**` : 'Seit gestern: erster Eintrag',
+    `### Aktueller Preis: ${zahl(neu.preis)} Taler`,
+    alt ? `### Seit gestern: [${vz}${prozent.toFixed(2)}% - ${zahl(alt.preis)}]` : '### Seit gestern: erster Eintrag',
     linie,
     `-# [Verlauf, Prognose & Tippspiel auf ruebenpreis.de](${WEBSITE})`
   ].join('\n'),
@@ -69,14 +68,12 @@ if (/^[A-Za-z0-9_]{3,16}$/.test(name)) {
   embed.footer = { text: 'gesendet von ' + name, icon_url: `https://mc-heads.net/avatar/${name}/32` };
 }
 
-const nachricht = {
-  username: 'Rübenpreis',
-  content: ROLLE ? `<@&${ROLLE}>` : '',
-  allowed_mentions: { roles: ROLLE ? [ROLLE] : [] },
-  embeds: [embed]
-};
-
-const post = await fetch(WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nachricht) });
-if (!post.ok) { console.error('Discord:', post.status, await post.text()); process.exit(1); }
+// Erst die Karte, dann darunter der Rollen-Ping als Spoiler (pingt trotzdem).
+async function senden(nachricht) {
+  const post = await fetch(WEBHOOK + (WEBHOOK.includes('?') ? '&' : '?') + 'wait=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nachricht) });
+  if (!post.ok) { console.error('Discord:', post.status, await post.text()); process.exit(1); }
+}
+await senden({ username: 'Rübenpreis', allowed_mentions: { parse: [] }, embeds: [embed] });
+if (ROLLE) await senden({ username: 'Rübenpreis', content: `||<@&${ROLLE}>||`, allowed_mentions: { roles: [ROLLE] } });
 writeFileSync(STAND, tag + '\n');
 console.log('Gepostet für ' + tag + ': ' + neu.preis);
