@@ -41,10 +41,10 @@ if (schon === tag && !ERZWINGEN) { console.log('Für ' + tag + ' schon gepostet.
 // Vortag = letzter Eintrag von einem früheren Tag
 const alt = eintraege.find(e => berlinTag(e.ts) < tag);
 const r = alt ? neu.preis / alt.preis : 1;
-let status = 'Unverändert', farbe = 0x9ca3af;
-if (r < 0.9) { status = 'Abgestürzt'; farbe = 0xef4444; }
-else if (r < 1) { status = 'Gefallen'; farbe = 0xf97316; }
-else if (r > 1) { status = 'Gestiegen'; farbe = 0x22c55e; }
+let status = 'Unverändert';
+if (r < 0.9) { status = 'Abgestürzt'; }
+else if (r < 1) { status = 'Gefallen'; }
+else if (r > 1) { status = 'Gestiegen'; }
 
 const [j, m, d] = tag.split('-');
 const prozent = alt ? ((r - 1) * 100) : 0;
@@ -52,28 +52,21 @@ const vz = prozent > 0 ? '+' : '';
 const linie = '-'.repeat(28);
 const name = neu.sender.replace(/\s*\(.*\)$/, '').trim();
 
-const embed = {
-  color: farbe,
-  description: [
-    `## [Datum: ${d}.${m}.${j} | ${status}](${WEBSITE})`,
-    linie,
-    `### Aktueller Preis: ${zahl(neu.preis)} Taler`,
-    alt ? `### Seit gestern: [${vz}${prozent.toFixed(2)}% - ${zahl(alt.preis)}]` : '### Seit gestern: erster Eintrag',
-    linie,
-    `-# [Verlauf, Prognose & Tippspiel auf ruebenpreis.de](${WEBSITE})`
-  ].join('\n'),
-  timestamp: new Date(neu.ts).toISOString()
-};
-if (/^[A-Za-z0-9_]{3,16}$/.test(name)) {
-  embed.footer = { text: 'gesendet von ' + name, icon_url: `https://mc-heads.net/avatar/${name}/32` };
-}
+// Eine einzige Nachricht (ohne Karte), damit der Rollen-Ping ganz unten stehen kann.
+const zeilen = [
+  `**Datum: ${d}.${m}.${j} | ${status}**`,
+  linie,
+  `# Aktueller Preis: ${zahl(neu.preis)} Taler`,
+  alt ? `Seit gestern: **[${vz}${prozent.toFixed(2)}% - ${zahl(alt.preis)}]**` : 'Seit gestern: erster Eintrag',
+  linie,
+  `-# [Verlauf, Prognose & Tippspiel auf ruebenpreis.de](<${WEBSITE}>)` + (/^[A-Za-z0-9_]{3,16}$/.test(name) ? ` · gesendet von ${name}` : '')
+];
+if (ROLLE) zeilen.push(`||<@&${ROLLE}>||`);
 
-// Erst die Karte, dann darunter der Rollen-Ping als Spoiler (pingt trotzdem).
-async function senden(nachricht) {
-  const post = await fetch(WEBHOOK + (WEBHOOK.includes('?') ? '&' : '?') + 'wait=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nachricht) });
-  if (!post.ok) { console.error('Discord:', post.status, await post.text()); process.exit(1); }
-}
-await senden({ username: 'Rübenpreis', allowed_mentions: { parse: [] }, embeds: [embed] });
-if (ROLLE) await senden({ username: 'Rübenpreis', content: `||<@&${ROLLE}>||`, allowed_mentions: { roles: [ROLLE] } });
+const post = await fetch(WEBHOOK + (WEBHOOK.includes('?') ? '&' : '?') + 'wait=true', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: 'Rübenpreis', content: zeilen.join('\n'), allowed_mentions: { roles: ROLLE ? [ROLLE] : [] }, flags: 4 })
+});
+if (!post.ok) { console.error('Discord:', post.status, await post.text()); process.exit(1); }
 writeFileSync(STAND, tag + '\n');
 console.log('Gepostet für ' + tag + ': ' + neu.preis);
