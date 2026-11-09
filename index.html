@@ -60,13 +60,26 @@
   .preis-meta { display: flex; flex-direction: column; gap: 6px; font-size: 1.05rem; }
   .preis-meta #aktAenderung { font-size: 1.25rem; }
   @media (max-width: 500px) { .preis-karte { padding: 18px; } }
-  .sender-box { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .sender-box { display: flex; align-items: center; gap: 12px; }
+  .karte-rechts { margin-left: auto; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+  .koenig-box { display: flex; align-items: center; gap: 12px; }
+  .koenig-box[hidden] { display: none; }
+  .koenig-figur { position: relative; width: 60px; height: 120px; margin-top: 14px; }
+  .koenig-figur img { width: 60px; height: 120px; image-rendering: pixelated; display: block; }
+  .koenig-figur .krone { position: absolute; left: 13px; top: -16px; width: 34px; height: 20px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+  #koenigName { font-weight: 700; color: var(--gold); font-size: 1.1rem; }
+  .tipp-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .tipp-form input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; font-size: 0.9rem; outline: none; }
+  .tipp-form input:focus { border-color: var(--accent); }
+  .tipp-meldung { font-size: 0.82rem; margin-top: 8px; min-height: 1.2em; }
+  .tipp-liste li .history-price { min-width: 0; }
+  @media (max-width: 600px) { .karte-rechts { margin-left: 0; } }
   .sender-box[hidden] { display: none; }
   .sender-box img { width: 64px; height: 64px; image-rendering: pixelated; border-radius: 6px; background: #151922; }
   .sender-text { display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; }
   .sender-text .muted { color: var(--muted); }
   #senderName { font-weight: 700; color: #fff; font-size: 1.05rem; }
-  @media (max-width: 600px) { .sender-box { margin-left: 0; } }
+
   .preis-meta .muted { color: var(--muted); }
 
   .coin-icon { width: 15px; height: 15px; vertical-align: -2px; }
@@ -201,9 +214,25 @@
       <span id="aktAenderung" class="muted">–</span>
       <span id="aktDatum" class="muted">–</span>
     </div>
+    <div class="karte-rechts">
+    <div class="koenig-box" id="koenigBox" hidden>
+      <div class="koenig-figur">
+        <svg class="krone" viewBox="0 0 12 7" shape-rendering="crispEdges" aria-hidden="true">
+          <rect x="0" y="0" width="2" height="1" fill="#ffd23f"/><rect x="5" y="0" width="2" height="1" fill="#ffd23f"/><rect x="10" y="0" width="2" height="1" fill="#ffd23f"/>
+          <rect x="0" y="1" width="2" height="2" fill="#ffd23f"/><rect x="5" y="1" width="2" height="2" fill="#ffd23f"/><rect x="10" y="1" width="2" height="2" fill="#ffd23f"/>
+          <rect x="2" y="2" width="3" height="1" fill="#ffd23f"/><rect x="7" y="2" width="3" height="1" fill="#ffd23f"/>
+          <rect x="0" y="3" width="12" height="3" fill="#ffd23f"/><rect x="0" y="6" width="12" height="1" fill="#c97d0b"/>
+          <rect x="2" y="4" width="1" height="1" fill="#ef4444"/><rect x="5" y="4" width="2" height="1" fill="#38bdf8"/><rect x="9" y="4" width="1" height="1" fill="#22c55e"/>
+          <rect x="0" y="0" width="1" height="1" fill="#fff4b8"/><rect x="5" y="0" width="1" height="1" fill="#fff4b8"/><rect x="10" y="0" width="1" height="1" fill="#fff4b8"/>
+        </svg>
+        <img id="koenigSkin" alt="" width="60" height="120">
+      </div>
+      <div class="sender-text"><span class="muted" id="koenigTitel">Bester Tipp</span><span id="koenigName"></span><span class="muted" id="koenigInfo"></span></div>
+    </div>
     <div class="sender-box" id="senderBox" hidden>
       <img id="senderKopf" alt="" width="64" height="64">
       <div class="sender-text"><span class="muted">gesendet von</span><span id="senderName"></span></div>
+    </div>
     </div>
   </div>
 
@@ -227,6 +256,28 @@
         <div class="chart-tooltip" id="chartTooltip"></div>
       </div>
       <ul class="history-list" id="historyList"></ul>
+    </div>
+  </section>
+
+  <section class="history-panel">
+    <div class="history-header">
+      <h2>Tippspiel</h2>
+      <span class="besucher-summe" id="tippInfo"></span>
+    </div>
+    <div class="history-body">
+      <div>
+        <p class="prog-klein" style="font-size:0.85rem;margin-bottom:10px;">Was wird der Rübenpreis <b id="tippTag" style="color:#fff">morgen</b>? Wer am nächsten dran ist, bekommt oben die Krone. Ein Tipp pro Person, Abgabe bis kurz vor Mitternacht.</p>
+        <div class="tipp-form">
+          <input type="text" id="tippName" maxlength="16" placeholder="Minecraft-Name" autocomplete="nickname" style="width:170px">
+          <input type="text" id="tippPreis" inputmode="numeric" placeholder="Dein Tipp" style="width:150px">
+          <button class="btn-primary" id="btnTipp">Tippen</button>
+        </div>
+        <div class="tipp-meldung" id="tippMeldung"></div>
+      </div>
+      <div>
+        <div class="prog-klein" id="tippListeTitel" style="margin-bottom:6px;">Tipps für heute</div>
+        <ul class="history-list tipp-liste" id="tippListe"><li class="history-empty">Noch keine Tipps.</li></ul>
+      </div>
     </div>
   </section>
 
@@ -307,7 +358,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, addDoc, deleteDoc, query, orderBy, limit, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, query, orderBy, limit, getDocs, writeBatch, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // Diese Werte sind NICHT geheim (Firebase-Web-Konfiguration). Geschützt wird alles über die
@@ -359,9 +410,11 @@ function gefiltert() {
 function renderAlles() {
   renderAktuell();
   renderListe(gefiltert().slice().reverse());
+  tippAbosPruefen(); renderTipps();
   renderChart(gefiltert());
   renderDurchschnitt();
   try { renderPrognose(); } catch (e) { console.error(e); }
+  try { renderTipps(); } catch (e) { console.error(e); }
 }
 
 function renderAktuell() {
@@ -667,6 +720,118 @@ function renderPrognose() {
     </div>
     <p class="prog-hinweis">Keine Garantie – Cytooxien würfelt.</p>`;
 }
+
+// ---------- Tippspiel ----------
+// Tipp = Dokument preisTipps/<tagMs>_<name>. tagMs = Mitternacht UTC des getippten Datums (Berlin-Datum).
+const tippsRef = collection(db, 'preisTipps');
+const tagMsVon = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+let tippsHeute = [];          // Tipps fuer heute (sichtbar ab Mitternacht)
+let tippsMorgenChef = [];     // nur fuer dich: schon abgegebene Tipps fuer morgen
+
+function heuteMs() { return tagMsVon(berlinTag(Date.now())); }
+
+function tippAbo(tagMs, ziel) {
+  return onSnapshot(query(tippsRef, where('tagMs', '==', tagMs)), (snap) => {
+    const l = []; snap.forEach(d => { const x = d.data(); if (x.name && x.tipp > 0) l.push({ ...x, _id: d.id }); });
+    ziel(l); renderTipps();
+  }, () => { ziel([]); renderTipps(); });
+}
+let aboHeuteTag = 0, aboHeute = null, aboMorgen = null;
+function tippAbosPruefen() {
+  const h = heuteMs();
+  if (h !== aboHeuteTag) {
+    aboHeuteTag = h;
+    if (aboHeute) aboHeute();
+    aboHeute = tippAbo(h, (l) => tippsHeute = l);
+    if (aboMorgen) { aboMorgen(); aboMorgen = null; }
+  }
+  if (istChef && !aboMorgen) aboMorgen = tippAbo(h + 864e5, (l) => tippsMorgenChef = l);
+  if (!istChef && aboMorgen) { aboMorgen(); aboMorgen = null; tippsMorgenChef = []; }
+}
+setInterval(tippAbosPruefen, 60000);
+
+function renderTipps() {
+  const h = heuteMs();
+  document.getElementById('tippTag').textContent = tagText(Math.round(h / 864e5) + 1);
+  // Echter Preis von heute (letzter Eintrag mit heutigem Berlin-Datum)
+  const heuteStr = berlinTag(Date.now());
+  let echt = null;
+  for (const e of eintraegeAsc) if (berlinTag(e.timestamp) === heuteStr) echt = e.price;
+  const zeit = (x) => x.zeit && x.zeit.toMillis ? x.zeit.toMillis() : 0;
+  const sortiert = tippsHeute.slice().sort((a, b) => echt != null
+    ? (Math.abs(a.tipp - echt) - Math.abs(b.tipp - echt)) || (zeit(a) - zeit(b))
+    : zeit(a) - zeit(b));
+
+  const liste = document.getElementById('tippListe');
+  document.getElementById('tippListeTitel').textContent = echt != null
+    ? `Tipps für heute (echter Preis: ${fmt(echt)})` : 'Tipps für heute (Preis noch nicht da)';
+  const geraeteZahl = {};
+  for (const x of sortiert) if (x.geraet) geraeteZahl[x.geraet] = (geraeteZahl[x.geraet] || 0) + 1;
+  liste.innerHTML = sortiert.length ? sortiert.map((x, i) => {
+    const abw = echt != null ? (x.tipp - echt) / echt * 100 : null;
+    const doppelt = x.geraet && geraeteZahl[x.geraet] > 1;
+    return `<li>
+      <span style="width:18px;color:${i === 0 && echt != null ? 'var(--gold)' : 'var(--muted)'};font-weight:700;">${echt != null ? (i + 1) + '.' : ''}</span>
+      <span style="color:#fff;font-weight:600;overflow:hidden;text-overflow:ellipsis;">${esc(x.name)}</span>
+      ${istChef && x.geraet ? `<span title="Gerät${doppelt ? ' - mehrere Tipps vom selben Gerät!' : ''}" style="font-size:0.7rem;color:${doppelt ? 'var(--warning)' : 'var(--muted)'};font-weight:${doppelt ? 700 : 400}">${esc(x.geraet)}${doppelt ? ' ⚠' : ''}</span>` : ''}
+      <span class="history-price" style="margin-left:auto">${fmt(x.tipp)} <img src="${ICON_COIN}" class="coin-icon" alt=""></span>
+      ${abw != null ? `<span class="history-change" style="color:var(--muted);min-width:52px;text-align:right">${abw > 0 ? '+' : ''}${abw.toLocaleString('de-DE', { maximumFractionDigits: 1 })}%</span>` : ''}
+      ${istChef ? `<button class="history-delete-btn" data-tipp="${esc(x._id)}" title="Tipp löschen" aria-label="Tipp löschen">✕</button>` : ''}
+    </li>`;
+  }).join('') : '<li class="history-empty">Noch keine Tipps für heute.</li>';
+  liste.querySelectorAll('[data-tipp]').forEach(b => b.addEventListener('click', async () => {
+    if (!istChef || !confirm('Diesen Tipp löschen?')) return;
+    try { await deleteDoc(doc(db, 'preisTipps', b.dataset.tipp)); } catch (err) { alert(err.message); }
+  }));
+
+  document.getElementById('tippInfo').textContent = istChef ? `${tippsMorgenChef.length} Tipps für morgen abgegeben` : '';
+
+  // Krone: bester Tipp von heute, sobald der echte Preis da ist
+  const box = document.getElementById('koenigBox');
+  if (echt != null && sortiert.length) {
+    const k = sortiert[0];
+    const img = document.getElementById('koenigSkin');
+    const url = 'https://mc-heads.net/player/' + encodeURIComponent(k.name) + '/60';
+    if (img.getAttribute('src') !== url) { img.onerror = () => { img.style.visibility = 'hidden'; }; img.style.visibility = ''; img.src = url; }
+    img.alt = 'Skin von ' + k.name;
+    document.getElementById('koenigName').textContent = k.name;
+    const abw = (k.tipp - echt) / echt * 100;
+    document.getElementById('koenigInfo').textContent =
+      `Tipp ${fmt(k.tipp)} (${abw > 0 ? '+' : ''}${abw.toLocaleString('de-DE', { maximumFractionDigits: 1 })} %)`;
+    box.hidden = false;
+  } else box.hidden = true;
+}
+
+const tippName = document.getElementById('tippName'), tippPreis = document.getElementById('tippPreis'), tippMeldung = document.getElementById('tippMeldung');
+tippName.value = gespeicherterName();
+tippPreis.addEventListener('input', () => { const p = parsePreis(tippPreis.value); tippPreis.value = p ? fmt(p) : ''; });
+const meldung = (txt, ok) => { tippMeldung.textContent = txt; tippMeldung.style.color = ok ? 'var(--accent)' : 'var(--warning)'; };
+document.getElementById('btnTipp').addEventListener('click', async () => {
+  const name = tippName.value.trim();
+  const preis = parsePreis(tippPreis.value);
+  if (!/^[A-Za-z0-9_]{3,16}$/.test(name)) return meldung('Bitte deinen Minecraft-Namen eingeben (3–16 Zeichen).');
+  if (!(preis > 0) || preis >= 100000000) return meldung('Bitte einen gültigen Preis eingeben.');
+  const tagMs = heuteMs() + 864e5;
+  let schon = null;
+  try { schon = localStorage.getItem('preis_tipp_' + tagMs); } catch (e) {}
+  if (schon && !istChef) return meldung(`Von diesem Gerät gab es schon einen Tipp für morgen (${fmt(Number(schon))}).`);
+  try {
+    await setDoc(doc(db, 'preisTipps', tagMs + '_' + name.toLowerCase()), { name, tipp: preis, tagMs, zeit: serverTimestamp(), geraet: geraetId() });
+    try { localStorage.setItem('preis_name', name); localStorage.setItem('preis_tipp_' + tagMs, String(preis)); } catch (e) {}
+    tippPreis.value = '';
+    meldung(`Dein Tipp für ${tagText(Math.round(tagMs / 864e5))}: ${fmt(preis)} – viel Glück!`, true);
+  } catch (err) {
+    meldung(err.code === 'permission-denied'
+      ? 'Für diesen Namen gibt es schon einen Tipp für morgen (oder die Abgabe ist vorbei).'
+      : 'Tipp konnte nicht gespeichert werden.');
+  }
+});
+// Eigenen Tipp von heute anzeigen (gespeichert im Browser)
+try {
+  const eig = localStorage.getItem('preis_tipp_' + (heuteMs() + 864e5));
+  if (eig) meldung(`Dein Tipp für morgen: ${fmt(Number(eig))}`, true);
+} catch (e) {}
+tippAbosPruefen();
 
 // ---------- Wert eintragen (nur Perfect2003, die Regeln prüfen das zusätzlich) ----------
 const bfOverlay = document.getElementById('backfillOverlay');
