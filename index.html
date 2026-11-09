@@ -226,10 +226,11 @@
   .name-hinweis input:focus { border-color: var(--accent); }
   @media (max-width: 500px) { .name-hinweis { left: 16px; right: 16px; max-width: none; } }
 
-  footer { text-align: center; color: var(--muted); font-size: 0.75rem; padding: 10px 16px 24px; }
-  footer button { background: none; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 0.75rem; }
-  .fuss-link { color: var(--muted); text-decoration: underline; }
-  .fuss-link:hover { color: #fff; }
+  footer { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 0; color: var(--muted); font-size: 0.8rem; padding: 14px 16px 26px; }
+  footer button { background: none; border: none; padding: 0; cursor: pointer; font: inherit; }
+  .fuss-link { color: var(--accent); text-decoration: none; }
+  .fuss-link:hover { text-decoration: underline; }
+  .fuss-strich { color: var(--muted); opacity: .5; margin: 0 14px; }
 </style>
 </head>
 <body>
@@ -239,6 +240,7 @@
   <div class="header-right">
     <span id="chefInfo" class="nur-chef" style="font-size:0.78rem;color:var(--accent);font-weight:600;">Angemeldet als Perfect2003</span>
     <button class="btn-clear-history nur-chef" id="btnAbmelden">Abmelden</button>
+    <button class="btn-clear-history" id="anmeldenTeil" style="display:none">Anmelden</button>
     <div class="sync-status" id="syncStatus"><div class="sync-dot"></div><span id="syncLabel">Verbinde…</span></div>
   </div>
 </header>
@@ -391,9 +393,10 @@
 </main>
 
 <footer>
-  Preise von Cytooxien · Made by <a class="fuss-link" href="https://discord.com/users/391316333800718341" target="_blank" rel="noopener" title="Perfect2003 auf Discord schreiben">Perfect2003</a> ·
-  <button id="btnNameAendern">Namen angeben/ändern</button><span id="anmeldenTeil" style="display:none"> ·
-  <button id="btnAnmelden">Anmelden</button></span>
+  <span>Preise von Cytooxien</span><span class="fuss-strich">|</span>
+  <span>Made by <a class="fuss-link" href="https://discord.com/users/391316333800718341" target="_blank" rel="noopener" title="Perfect2003 auf Discord schreiben">Perfect2003</a></span><span class="fuss-strich">|</span>
+  <a class="fuss-link" href="https://github.com/perfect20003/ruebenpreis" target="_blank" rel="noopener">GitHub Repository</a><span class="fuss-strich">|</span>
+  <button id="btnNameAendern" class="fuss-link">Namen angeben/ändern</button>
 </footer>
 
 <!-- Vollbild-Verlauf -->
@@ -1243,7 +1246,7 @@ function loginOeffnen() {
 }
 if (location.hash === '#login') setTimeout(loginOeffnen, 0);
 window.addEventListener('hashchange', () => { if (location.hash === '#login' && !istChef) { document.getElementById('anmeldenTeil').style.display = ''; loginOeffnen(); } });
-document.getElementById('btnAnmelden').addEventListener('click', () => {
+document.getElementById('anmeldenTeil').addEventListener('click', () => {
   loginFehler.style.display = 'none'; loginOverlay.style.display = 'flex';
   document.getElementById('loginEmail').focus();
 });
