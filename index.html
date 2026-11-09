@@ -637,12 +637,16 @@ function renderChartIn(asc, svgId, leerId, tipId, H) {
   const PT = 14, PB = 28, PR = 12;
   const W = svg.getBoundingClientRect().width || 600;
   const preise = asc.map(e => e.price);
-  const minP = Math.min(...preise), maxP = Math.max(...preise);
-  const logMin = Math.max(1, minP), logMax = Math.max(logMin + 1, maxP);
+  // Ohne Log-Skala beginnt die Achse immer bei 0, nicht beim tiefsten Preis.
+  const minP = 0, maxP = Math.max(...preise);
+  const logMin = Math.max(1, Math.min(...preise)), logMax = Math.max(logMin + 1, maxP);
+  // Log-Skala: unten 0 mit Achsenbruch, darueber die Log-Achse ab dem tiefsten Preis.
+  const BRUCH = useLogScale ? 22 : 0;
+  const unten = H - PB - BRUCH;
   const toY = (v) => useLogScale
-    ? (H - PB) - ((Math.log10(Math.max(1, v)) - Math.log10(logMin)) / ((Math.log10(logMax) - Math.log10(logMin)) || 1)) * (H - PB - PT)
+    ? (v <= 0 ? H - PB : unten - ((Math.log10(Math.max(1, v)) - Math.log10(logMin)) / ((Math.log10(logMax) - Math.log10(logMin)) || 1)) * (unten - PT))
     : (H - PB) - ((v - minP) / ((maxP - minP) || 1)) * (H - PB - PT);
-  const ticks = useLogScale ? niceLogTicks(logMin, logMax, 5) : niceTicks(minP, maxP, 5);
+  const ticks = useLogScale ? [0, ...niceLogTicks(logMin, logMax, 5).filter(v => v >= logMin * 0.95)] : niceTicks(minP, maxP, 5);
   const laengstes = ticks.reduce((a, t) => { const s = fmtY(t); return s.length > a.length ? s : a; }, '');
   const PL = Math.max(44, laengstes.length * 7 + 8);
   const plotW = W - PL - PR;
@@ -653,7 +657,7 @@ function renderChartIn(asc, svgId, leerId, tipId, H) {
   const areaD = `${pathD} L ${pts[pts.length - 1].x.toFixed(1)} ${H - PB} L ${pts[0].x.toFixed(1)} ${H - PB} Z`;
   const grid = ticks.map(t => {
     const yN = toY(t);
-    const ly = ((H - PB) - yN < 12) ? (H - PB - 12) : yN;
+    const ly = yN;
     return `<line x1="${PL}" y1="${yN.toFixed(1)}" x2="${W - PR}" y2="${yN.toFixed(1)}" stroke="rgba(255,255,255,0.06)"></line>
       <text x="${PL - 6}" y="${ly.toFixed(1)}" fill="var(--muted)" font-size="11" text-anchor="end" dominant-baseline="middle">${fmtY(t)}</text>`;
   }).join('');
