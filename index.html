@@ -73,6 +73,8 @@
   .tipp-form input:focus { border-color: var(--accent); }
   .tipp-meldung { font-size: 0.82rem; margin-top: 8px; min-height: 1.2em; }
   .tipp-liste li .history-price { min-width: 0; }
+  .nur-chef-block { display: none; }
+  body.chef .nur-chef-block { display: block; }
   @media (max-width: 600px) { .karte-rechts { margin-left: 0; } }
   .sender-box[hidden] { display: none; }
   .sender-box img { width: 64px; height: 64px; image-rendering: pixelated; border-radius: 6px; background: #151922; }
@@ -277,6 +279,10 @@
       <div>
         <div class="prog-klein" id="tippListeTitel" style="margin-bottom:6px;">Tipps für heute</div>
         <ul class="history-list tipp-liste" id="tippListe"><li class="history-empty">Noch keine Tipps.</li></ul>
+        <div class="nur-chef-block">
+          <div class="prog-klein" id="tippMorgenTitel" style="margin:12px 0 6px;">Tipps für morgen (nur du siehst die)</div>
+          <ul class="history-list tipp-liste" id="tippListeMorgen"></ul>
+        </div>
       </div>
     </div>
   </section>
@@ -286,6 +292,20 @@
       <h2>Prognose</h2>
     </div>
     <div id="prognoseInhalt"><p class="prog-hinweis">Lade…</p></div>
+  </section>
+
+  <section class="history-panel nur-chef" id="panelProgCheck" style="flex-direction:column;">
+    <div class="history-header">
+      <h2>Alte Prognosen <span style="color:var(--muted);font-weight:500;font-size:0.8rem;">(nur du siehst das)</span></h2>
+      <span class="besucher-summe" id="progCheckSumme">–</span>
+    </div>
+    <div style="overflow-x:auto; max-height:420px; overflow-y:auto;">
+      <table class="besucher-tabelle">
+        <thead><tr><th>Tag</th><th class="zahl">Echt</th><th class="zahl">Erwartet</th><th class="zahl">Spanne normal</th><th class="zahl">Absturz-Chance</th><th>Ergebnis</th></tr></thead>
+        <tbody id="progCheckListe"></tbody>
+      </table>
+    </div>
+    <p class="prog-hinweis">So hätte die Prognose an dem Tag ausgesehen – berechnet nur aus den Preisen bis zum Vortag.</p>
   </section>
 
   <section class="history-panel nur-chef" id="panelBesucher" style="flex-direction:column;">
@@ -411,10 +431,12 @@ function renderAlles() {
   renderAktuell();
   renderListe(gefiltert().slice().reverse());
   tippAbosPruefen(); renderTipps();
+  try { renderProgCheck(); } catch (e) { console.error(e); }
   renderChart(gefiltert());
   renderDurchschnitt();
   try { renderPrognose(); } catch (e) { console.error(e); }
   try { renderTipps(); } catch (e) { console.error(e); }
+  try { renderProgCheck(); } catch (e) { console.error(e); }
 }
 
 function renderAktuell() {
@@ -670,6 +692,55 @@ function statistik(t) {
 
 const pz = (x) => Math.round(x * 100) + ' %';
 
+// Prognose fuer den Tag nach t[t.length-1], nur aus der Liste t berechnet.
+function prognoseAus(t) {
+  const s = statistik(t);
+  const letzter = t[t.length - 1];
+  const ph = phaseBei(t, t.length - 1);
+  const n = ph < 0 ? 3 : Math.min(MAX_PHASE, ph + 1);
+  const pA = s.risiko[n], pS = (1 - pA) * s.sprungChance, pN = 1 - pA - pS;
+  const p = letzter.preis;
+  return { pA, pS, pN, tief: p * s.q10, mitte: p * s.q50, hoch: p * s.q90,
+           erwartung: pN * p * s.mittelSteigt + pS * p * s.mittelSprung + pA * s.crash50 };
+}
+
+// Fuer dich: was die Prognose an den letzten 60 Tagen gesagt haette (Backtest).
+function renderProgCheck() {
+  if (!istChef) return;
+  const t = prognoseTageListe();
+  const zeilen = [];
+  let n = 0, inSpanne = 0, sumAbw = 0, crashTage = 0, crashErkannt = 0;
+  for (let i = t.length - 1; i >= 12 && zeilen.length < 60; i--) {
+    if (t[i].tag - t[i - 1].tag !== 1) continue; // nur lueckenlose Tage
+    const pr = prognoseAus(t.slice(0, i));
+    const echt = t[i].preis;
+    let erg, farbe;
+    if (t[i].art === 'ABSTURZ') {
+      crashTage++;
+      const hoch = pr.pA >= 0.3; if (hoch) crashErkannt++;
+      erg = 'Absturz' + (hoch ? ' (Warnung war da)' : ' (kam überraschend)'); farbe = '#ef4444';
+    } else if (t[i].art === 'SPRUNG') {
+      erg = 'Sprung'; farbe = '#38bdf8';
+    } else if (echt >= Math.round(pr.tief) && echt <= Math.round(pr.hoch)) {
+      erg = '✓ in der Spanne'; farbe = 'var(--accent)'; inSpanne++;
+    } else {
+      erg = echt > pr.hoch ? 'höher als erwartet' : 'tiefer als erwartet'; farbe = 'var(--gold)';
+    }
+    if (t[i].art === 'STEIGT') { n++; sumAbw += Math.abs(echt - pr.mitte) / echt; }
+    zeilen.push(`<tr>
+      <td>${tagText(t[i].tag)}</td>
+      <td class="zahl" style="color:var(--gold);font-weight:700">${fmt(echt)}</td>
+      <td class="zahl">${fmt(pr.erwartung)}</td>
+      <td class="zahl" style="color:var(--muted)">${fmt(pr.tief)} – ${fmt(pr.hoch)}</td>
+      <td class="zahl">${pz(pr.pA)}</td>
+      <td style="color:${farbe};font-weight:600">${erg}</td></tr>`);
+  }
+  document.getElementById('progCheckListe').innerHTML = zeilen.join('') || '<tr><td colspan="6" style="color:var(--muted)">Zu wenige Daten.</td></tr>';
+  document.getElementById('progCheckSumme').textContent = n
+    ? `Normale Tage: ${Math.round(inSpanne / n * 100)} % in der Spanne, Mitte im Schnitt ${(sumAbw / n * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 })} % daneben · Abstürze mit Warnung: ${crashErkannt}/${crashTage}`
+    : '–';
+}
+
 function renderPrognose() {
   const box = document.getElementById('prognoseInhalt');
   const t = prognoseTageListe();
@@ -765,9 +836,27 @@ function renderTipps() {
   const liste = document.getElementById('tippListe');
   document.getElementById('tippListeTitel').textContent = echt != null
     ? `Tipps für heute (echter Preis: ${fmt(echt)})` : 'Tipps für heute (Preis noch nicht da)';
+  liste.innerHTML = sortiert.length ? tippZeilen(sortiert, echt) : '<li class="history-empty">Noch keine Tipps für heute.</li>';
+
+  // Nur fuer dich: alle Tipps fuer morgen (nach Abgabezeit), mit Loeschen
+  const morgen = tippsMorgenChef.slice().sort((a, b) => zeit(a) - zeit(b));
+  document.getElementById('tippMorgenTitel').textContent = `Tipps für morgen – ${morgen.length} abgegeben (nur du siehst die)`;
+  document.getElementById('tippListeMorgen').innerHTML = morgen.length ? tippZeilen(morgen, null)
+    : '<li class="history-empty">Noch keine Tipps für morgen.</li>';
+
+  document.querySelectorAll('[data-tipp]').forEach(b => b.addEventListener('click', async () => {
+    if (!istChef || !confirm('Diesen Tipp löschen?')) return;
+    try { await deleteDoc(doc(db, 'preisTipps', b.dataset.tipp)); } catch (err) { alert(err.message); }
+  }));
+
+  document.getElementById('tippInfo').textContent = '';
+  koenigZeigen(sortiert, echt);
+}
+
+function tippZeilen(sortiert, echt) {
   const geraeteZahl = {};
   for (const x of sortiert) if (x.geraet) geraeteZahl[x.geraet] = (geraeteZahl[x.geraet] || 0) + 1;
-  liste.innerHTML = sortiert.length ? sortiert.map((x, i) => {
+  return sortiert.map((x, i) => {
     const abw = echt != null ? (x.tipp - echt) / echt * 100 : null;
     const doppelt = x.geraet && geraeteZahl[x.geraet] > 1;
     return `<li>
@@ -778,15 +867,11 @@ function renderTipps() {
       ${abw != null ? `<span class="history-change" style="color:var(--muted);min-width:52px;text-align:right">${abw > 0 ? '+' : ''}${abw.toLocaleString('de-DE', { maximumFractionDigits: 1 })}%</span>` : ''}
       ${istChef ? `<button class="history-delete-btn" data-tipp="${esc(x._id)}" title="Tipp löschen" aria-label="Tipp löschen">✕</button>` : ''}
     </li>`;
-  }).join('') : '<li class="history-empty">Noch keine Tipps für heute.</li>';
-  liste.querySelectorAll('[data-tipp]').forEach(b => b.addEventListener('click', async () => {
-    if (!istChef || !confirm('Diesen Tipp löschen?')) return;
-    try { await deleteDoc(doc(db, 'preisTipps', b.dataset.tipp)); } catch (err) { alert(err.message); }
-  }));
+  }).join('');
+}
 
-  document.getElementById('tippInfo').textContent = istChef ? `${tippsMorgenChef.length} Tipps für morgen abgegeben` : '';
-
-  // Krone: bester Tipp von heute, sobald der echte Preis da ist
+// Krone: bester Tipp von heute, sobald der echte Preis da ist
+function koenigZeigen(sortiert, echt) {
   const box = document.getElementById('koenigBox');
   if (echt != null && sortiert.length) {
     const k = sortiert[0];
