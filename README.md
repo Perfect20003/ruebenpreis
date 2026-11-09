@@ -1,4 +1,4 @@
-# Rübenpreis
+# Ruebenpreis
 
 Hier seht ihr den aktuellen Rübenpreis von Cytooxien und wie er sich entwickelt hat.
 
