@@ -126,6 +126,14 @@
   .prog-mittel { font-size: 1rem; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
   .prog-klein { color: var(--muted); font-size: 0.75rem; }
   .prog-hinweis { color: var(--muted); font-size: 0.75rem; margin-top: 10px; }
+  .prog-toggle { background: none; display: flex; align-items: center; gap: 10px; cursor: pointer; color: inherit; padding: 0; text-align: left; }
+  .prog-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+  .prog-pfeil { color: var(--muted); font-size: 0.9rem; transition: transform .15s; display: inline-block; }
+  .prog-panel:not(.zu) .prog-pfeil { transform: rotate(90deg); }
+  .prog-zu-text { color: var(--muted); font-size: 0.8rem; }
+  .prog-panel:not(.zu) .prog-zu-text { display: none; }
+  .prog-panel.zu #prognoseInhalt { display: none; }
+  .prog-panel.zu .history-header { margin-bottom: 0; }
   .history-empty { color: var(--muted); justify-content: center; }
   .history-delete-btn {
     background: none; color: var(--muted); cursor: pointer; font-size: 0.75rem; padding: 0 4px; line-height: 1;
@@ -136,6 +144,23 @@
   .history-delete-btn:hover { color: var(--warning); }
 
   .chart-wrap { position: relative; min-height: 260px; }
+  #priceChart { cursor: zoom-in; }
+  .chart-wrap .voll-hinweis { position: absolute; top: 4px; right: 6px; font-size: 0.7rem; color: var(--muted); opacity: 0; transition: opacity .15s; pointer-events: none; }
+  .chart-wrap:hover .voll-hinweis { opacity: 1; }
+  .voll-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.75); display: none; padding: 16px; }
+  .voll-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 100%; height: 100%; display: flex; flex-direction: column; padding: 16px 18px; gap: 12px; }
+  .voll-kopf { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .voll-kopf h2 { font-size: 1.2rem; color: #fff; margin-right: auto; }
+  .voll-inhalt { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 260px; gap: 16px; }
+  #vollChartWrap { position: relative; min-height: 0; }
+  #vollChartWrap svg { width: 100%; height: 100%; display: block; }
+  .voll-liste { list-style: none; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 4px; scrollbar-color: #fff #0b0e14; scrollbar-width: thin; }
+  .voll-liste li { display: flex; align-items: center; gap: 8px; font-size: 1rem; padding: 8px 12px; border-radius: 8px; background: #151922; }
+  .voll-liste .history-change { font-size: 0.9rem; }
+  .voll-liste .coin-icon { width: 17px; height: 17px; }
+  .btn-voll-zu { background: #1f2431; color: #fff; font-size: 1.1rem; width: 36px; height: 32px; border-radius: 8px; cursor: pointer; }
+  .btn-voll-zu:hover { background: #2d3446; }
+  @media (max-width: 700px) { .voll-inhalt { grid-template-columns: 1fr; grid-template-rows: 1fr 35%; } .voll-overlay { padding: 6px; } }
   .chart-wrap svg { width: 100%; height: 260px; display: block; }
   .chart-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.82rem; }
   .chart-tooltip {
@@ -247,7 +272,7 @@
         <button class="btn-clear-history btn-timerange active-range" data-days="30">1M</button>
         <button class="btn-clear-history btn-timerange" data-days="90">3M</button>
         <button class="btn-clear-history btn-timerange" data-days="0">Alles</button>
-        <button class="btn-clear-history" id="btnToggleLog">Log-Skala: Ein</button>
+        <button class="btn-clear-history btn-log" id="btnToggleLog">Log-Skala: Ein</button>
         <button class="btn-clear-history nur-chef" id="btnBackfillPrice" title="Preis mit Datum eintragen">Wert eintragen</button>
       </div>
     </div>
@@ -256,6 +281,7 @@
         <svg id="priceChart" viewBox="0 0 600 260" role="img" aria-label="Verlauf des Rübenpreises"></svg>
         <div class="chart-empty" id="chartEmpty">Lade Preise…</div>
         <div class="chart-tooltip" id="chartTooltip"></div>
+        <span class="voll-hinweis">Klicken zum Vergrößern</span>
       </div>
       <ul class="history-list" id="historyList"></ul>
     </div>
@@ -287,9 +313,12 @@
     </div>
   </section>
 
-  <section class="history-panel">
+  <section class="history-panel prog-panel zu" id="panelPrognose">
     <div class="history-header">
-      <h2>Prognose</h2>
+      <button class="prog-toggle" id="btnPrognose" aria-expanded="false" aria-controls="prognoseInhalt">
+        <span class="prog-pfeil" aria-hidden="true">▸</span><h2>Prognose</h2>
+        <span class="prog-zu-text">anzeigen – erst tippen, dann gucken</span>
+      </button>
     </div>
     <div id="prognoseInhalt"><p class="prog-hinweis">Lade…</p></div>
   </section>
@@ -330,6 +359,30 @@
   <button id="btnNameAendern">Namen angeben/ändern</button> ·
   <button id="btnAnmelden">Anmelden</button>
 </footer>
+
+<!-- Vollbild-Verlauf -->
+<div class="voll-overlay" id="vollOverlay" role="dialog" aria-modal="true" aria-label="Marktpreis-Verlauf groß">
+  <div class="voll-box">
+    <div class="voll-kopf">
+      <h2>Marktpreis-Verlauf</h2>
+      <span id="vollAvg" style="color:var(--gold); font-weight:700; white-space:nowrap;">Ø –</span>
+      <button class="btn-clear-history btn-timerange" data-days="7">7T</button>
+      <button class="btn-clear-history btn-timerange active-range" data-days="30">1M</button>
+      <button class="btn-clear-history btn-timerange" data-days="90">3M</button>
+      <button class="btn-clear-history btn-timerange" data-days="0">Alles</button>
+      <button class="btn-clear-history btn-log">Log-Skala: Ein</button>
+      <button class="btn-voll-zu" id="btnVollZu" title="Schließen (Esc)" aria-label="Schließen">✕</button>
+    </div>
+    <div class="voll-inhalt">
+      <div id="vollChartWrap" class="chart-wrap" style="min-height:0">
+        <svg id="vollChart" viewBox="0 0 600 400" role="img" aria-label="Verlauf des Rübenpreises groß"></svg>
+        <div class="chart-empty" id="vollEmpty"></div>
+        <div class="chart-tooltip" id="vollTooltip"></div>
+      </div>
+      <ul class="voll-liste" id="vollListe"></ul>
+    </div>
+  </div>
+</div>
 
 <!-- Freiwilliger Name -->
 <div class="name-hinweis" id="nameHinweis" role="dialog" aria-label="Freiwilliger Name">
@@ -529,14 +582,19 @@ function niceLogTicks(minV, maxV, count = 5) {
 }
 
 function renderChart(asc) {
-  const svg = document.getElementById('priceChart');
-  const leer = document.getElementById('chartEmpty');
-  const tooltip = document.getElementById('chartTooltip');
+  renderChartIn(asc, 'priceChart', 'chartEmpty', 'chartTooltip', 260);
+  if (vollOffen) { renderChartIn(asc, 'vollChart', 'vollEmpty', 'vollTooltip', vollHoehe()); renderVollListe(); }
+}
+
+function renderChartIn(asc, svgId, leerId, tipId, H) {
+  const svg = document.getElementById(svgId);
+  const leer = document.getElementById(leerId);
+  const tooltip = document.getElementById(tipId);
   tooltip.style.display = 'none';
   if (!asc.length) { svg.innerHTML = ''; leer.textContent = 'Noch keine Preise erfasst.'; leer.style.display = 'flex'; return; }
   leer.style.display = 'none';
 
-  const H = 260, PT = 14, PB = 28, PR = 12;
+  const PT = 14, PB = 28, PR = 12;
   const W = svg.getBoundingClientRect().width || 600;
   const preise = asc.map(e => e.price);
   const minP = Math.min(...preise), maxP = Math.max(...preise);
@@ -586,17 +644,51 @@ function renderChart(asc) {
   });
 }
 
-document.querySelectorAll('.btn-timerange').forEach(btn => btn.addEventListener('click', () => {
-  document.querySelectorAll('.btn-timerange').forEach(b => b.classList.remove('active-range'));
-  btn.classList.add('active-range');
+document.querySelectorAll('.btn-timerange').forEach(btn => btn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.querySelectorAll('.btn-timerange').forEach(b => b.classList.toggle('active-range', b.dataset.days === btn.dataset.days));
   activeRangeDays = parseInt(btn.dataset.days, 10);
   renderAlles();
 }));
-document.getElementById('btnToggleLog').addEventListener('click', () => {
+document.querySelectorAll('.btn-log').forEach(btn => btn.addEventListener('click', (e) => {
+  e.stopPropagation();
   useLogScale = !useLogScale;
-  document.getElementById('btnToggleLog').textContent = `Log-Skala: ${useLogScale ? 'Ein' : 'Aus'}`;
+  document.querySelectorAll('.btn-log').forEach(b => b.textContent = `Log-Skala: ${useLogScale ? 'Ein' : 'Aus'}`);
   renderChart(gefiltert());
-});
+}));
+
+// ---------- Vollbild-Ansicht des Verlaufs ----------
+let vollOffen = false;
+const vollOverlay = document.getElementById('vollOverlay');
+function vollHoehe() {
+  const box = document.getElementById('vollChartWrap');
+  return Math.max(260, Math.round(box.getBoundingClientRect().height || 400));
+}
+function renderVollListe() {
+  const desc = gefiltert().slice().reverse();
+  document.getElementById('vollAvg').textContent = document.getElementById('avgPrice').textContent;
+  document.getElementById('vollListe').innerHTML = desc.length ? desc.map((e, i) => {
+    const vorher = desc[i + 1];
+    return `<li><span class="history-price">${fmt(e.price)} <img src="${ICON_COIN}" class="coin-icon" alt=""></span>
+      <span class="history-change" style="margin-left:auto">${vorher ? aenderungHtml(e.price, vorher.price) : ''}</span></li>`;
+  }).join('') : '<li class="history-empty">Noch keine Preise erfasst.</li>';
+}
+function vollAuf() {
+  vollOffen = true;
+  vollOverlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => renderChart(gefiltert()));
+  document.getElementById('btnVollZu').focus();
+}
+function vollZu() {
+  vollOffen = false;
+  vollOverlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.querySelector('#priceChart').closest('.chart-wrap').addEventListener('click', vollAuf);
+document.getElementById('btnVollZu').addEventListener('click', vollZu);
+vollOverlay.addEventListener('click', (e) => { if (e.target === vollOverlay) vollZu(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && vollOffen) vollZu(); });
 let resizeTimer = null;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => renderChart(gefiltert()), 150); });
 
@@ -899,7 +991,7 @@ document.getElementById('btnTipp').addEventListener('click', async () => {
   const tagMs = heuteMs() + 864e5;
   let schon = null;
   try { schon = localStorage.getItem('preis_tipp_' + tagMs); } catch (e) {}
-  if (schon && !istChef) return meldung(`Von diesem Gerät gab es schon einen Tipp für morgen (${fmt(Number(schon))}).`);
+  if (schon) return meldung(`Von diesem Gerät gab es schon einen Tipp für morgen (${fmt(Number(schon))}).`);
   try {
     await setDoc(doc(db, 'preisTipps', tagMs + '_' + name.toLowerCase()), { name, tipp: preis, tagMs, zeit: serverTimestamp(), geraet: geraetId() });
     try { localStorage.setItem('preis_name', name); localStorage.setItem('preis_tipp_' + tagMs, String(preis)); } catch (e) {}
@@ -917,6 +1009,13 @@ try {
   if (eig) meldung(`Dein Tipp für morgen: ${fmt(Number(eig))}`, true);
 } catch (e) {}
 tippAbosPruefen();
+
+// Prognose ein-/ausklappen (startet immer eingeklappt)
+document.getElementById('btnPrognose').addEventListener('click', () => {
+  const p = document.getElementById('panelPrognose');
+  const zu = p.classList.toggle('zu');
+  document.getElementById('btnPrognose').setAttribute('aria-expanded', String(!zu));
+});
 
 // ---------- Wert eintragen (nur Perfect2003, die Regeln prüfen das zusätzlich) ----------
 const bfOverlay = document.getElementById('backfillOverlay');
