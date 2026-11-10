@@ -75,6 +75,8 @@
   .tipp-meldung { font-size: 0.82rem; margin-top: 8px; min-height: 1.2em; }
   .tipp-liste li .history-price { min-width: 0; }
   .serie { font-size: 0.68rem; font-weight: 700; color: #f97316; background: rgba(249,115,22,.12); padding: 1px 6px; border-radius: 5px; white-space: nowrap; }
+  #tippMorgenBlock[hidden], #tippMorgenHinweis[hidden] { display: none; }
+  .tipp-liste li.eigener { background: rgba(34,197,94,.08); border-radius: 6px; }
   .nur-chef-block { display: none; }
   body.chef .nur-chef-block { display: block; }
   @media (max-width: 600px) { .karte-rechts { margin-left: 0; } }
@@ -317,10 +319,11 @@
       <div>
         <div class="prog-klein" id="tippListeTitel" style="margin-bottom:6px;">Tipps für heute</div>
         <ul class="history-list tipp-liste" id="tippListe"><li class="history-empty">Noch keine Tipps.</li></ul>
-        <div class="nur-chef-block">
-          <div class="prog-klein" id="tippMorgenTitel" style="margin:12px 0 6px;">Tipps für morgen (nur du siehst die)</div>
+        <div id="tippMorgenBlock" hidden>
+          <div class="prog-klein" id="tippMorgenTitel" style="margin:12px 0 6px;">Tipps für morgen</div>
           <ul class="history-list tipp-liste" id="tippListeMorgen"></ul>
         </div>
+        <p class="prog-hinweis" id="tippMorgenHinweis" style="margin:10px 0 0">Gib einen Tipp ab, dann siehst du auch die Tipps der anderen für morgen.</p>
       </div>
     </div>
   </section>
@@ -933,7 +936,9 @@ function renderPrognose() {
 const tippsRef = collection(db, 'preisTipps');
 const tagMsVon = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
 let tippsHeute = [];          // Tipps fuer heute (sichtbar ab Mitternacht)
-let tippsMorgenChef = [];     // nur fuer dich: schon abgegebene Tipps fuer morgen
+let tippsMorgenChef = [];     // Tipps fuer morgen: fuer dich immer, fuer andere erst nach eigenem Tipp
+// Hat dieses Geraet schon fuer morgen getippt?
+function selbstGetippt() { try { return !!localStorage.getItem('preis_tipp_' + (heuteMs() + 864e5)); } catch (e) { return false; } }
 
 function heuteMs() { return tagMsVon(berlinTag(Date.now())); }
 
@@ -1035,9 +1040,10 @@ function tippAbosPruefen() {
     vergangeneAbo();
     if (aboMorgen) { aboMorgen(); aboMorgen = null; }
   }
-  if (istChef && !aboMorgen) aboMorgen = tippAbo(h + 864e5, (l) => tippsMorgenChef = l);
+  const morgenSehen = istChef || selbstGetippt();
+  if (morgenSehen && !aboMorgen) aboMorgen = tippAbo(h + 864e5, (l) => tippsMorgenChef = l);
   alleTippsAbo();
-  if (!istChef && aboMorgen) { aboMorgen(); aboMorgen = null; tippsMorgenChef = []; }
+  if (!morgenSehen && aboMorgen) { aboMorgen(); aboMorgen = null; tippsMorgenChef = []; }
 }
 setInterval(tippAbosPruefen, 60000);
 
@@ -1058,9 +1064,12 @@ function renderTipps() {
     ? `Tipps für heute (echter Preis: ${fmt(echt)})` : 'Tipps für heute (Preis noch nicht da)';
   liste.innerHTML = sortiert.length ? tippZeilen(sortiert, echt) : '<li class="history-empty">Noch keine Tipps für heute.</li>';
 
-  // Nur fuer dich: alle Tipps fuer morgen (nach Abgabezeit), mit Loeschen
+  // Tipps fuer morgen: fuer dich immer (mit Loeschen), fuer andere erst nach dem eigenen Tipp
+  const morgenSehen = istChef || selbstGetippt();
+  document.getElementById('tippMorgenBlock').hidden = !morgenSehen;
+  document.getElementById('tippMorgenHinweis').hidden = morgenSehen;
   const morgen = tippsMorgenChef.slice().sort((a, b) => zeit(a) - zeit(b));
-  document.getElementById('tippMorgenTitel').textContent = `Tipps für morgen – ${morgen.length} abgegeben (nur du siehst die)`;
+  document.getElementById('tippMorgenTitel').textContent = `Tipps für morgen – ${morgen.length} abgegeben`;
   document.getElementById('tippListeMorgen').innerHTML = morgen.length ? tippZeilen(morgen, null)
     : '<li class="history-empty">Noch keine Tipps für morgen.</li>';
 
@@ -1076,10 +1085,11 @@ function renderTipps() {
 function tippZeilen(sortiert, echt) {
   const geraeteZahl = {};
   for (const x of sortiert) if (x.geraet) geraeteZahl[x.geraet] = (geraeteZahl[x.geraet] || 0) + 1;
+  const meinGeraet = geraetId();
   return sortiert.map((x, i) => {
     const abw = echt != null ? (x.tipp - echt) / echt * 100 : null;
     const doppelt = x.geraet && geraeteZahl[x.geraet] > 1;
-    return `<li>
+    return `<li${x.geraet === meinGeraet ? ' class="eigener" title="Dein Tipp"' : ''}>
       <span style="width:18px;color:${i === 0 && echt != null ? 'var(--gold)' : 'var(--muted)'};font-weight:700;">${echt != null ? (i + 1) + '.' : ''}</span>
       <span style="color:#fff;font-weight:600;overflow:hidden;text-overflow:ellipsis;">${esc(x.name)}</span>${serieText(serie(x.name))}
       ${istChef && x.geraet ? `<span title="Gerät${doppelt ? ' - mehrere Tipps vom selben Gerät!' : ''}" style="font-size:0.7rem;color:${doppelt ? 'var(--warning)' : 'var(--muted)'};font-weight:${doppelt ? 700 : 400}">${esc(x.geraet)}${doppelt ? ' ⚠' : ''}</span>` : ''}
@@ -1151,6 +1161,7 @@ document.getElementById('btnTipp').addEventListener('click', async () => {
     tippPreis.value = '';
     const s = serie(name);
     meldung(`Dein Tipp für ${tagText(Math.round(tagMs / 864e5))}: ${fmt(preis)} – viel Glück!` + (s >= 2 ? ` Das ist dein ${s}. Tag in Folge.` : ''), true);
+    tippAbosPruefen(); renderTipps();
   } catch (err) {
     meldung(err.code === 'permission-denied'
       ? 'Für diesen Namen gibt es schon einen Tipp für morgen (oder die Abgabe ist vorbei).'
