@@ -78,6 +78,16 @@
   #tippMorgenBlock[hidden], #tippMorgenHinweis[hidden] { display: none; }
   .tipp-liste li.eigener { background: rgba(34,197,94,.08); border-radius: 6px; }
   .bestenliste tr.eigener td { background: rgba(34,197,94,.08); }
+  .tipp-titel-zeile { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .btn-bestenliste { display: inline-flex; align-items: center; gap: 6px; background: #1f2431; color: var(--gold); border: 1px solid var(--border);
+    font-weight: 600; font-size: 0.75rem; padding: 5px 9px; border-radius: 7px; cursor: pointer; white-space: nowrap; margin-right: 4px; }
+  .btn-bestenliste:hover { border-color: var(--gold); }
+  .btn-bestenliste span { color: #fff; }
+  .modal.modal-breit { max-width: 560px; }
+  .beste-kopf { display: flex; align-items: center; gap: 10px; }
+  .beste-kopf .besucher-summe { margin-left: auto; }
+  .beste-zu { background: none; color: var(--muted); font-size: 1rem; cursor: pointer; padding: 2px 6px; border-radius: 6px; }
+  .beste-zu:hover { color: #fff; background: #1f2431; }
   .nur-chef-block { display: none; }
   body.chef .nur-chef-block { display: block; }
   @media (max-width: 600px) { .karte-rechts { margin-left: 0; } }
@@ -318,7 +328,13 @@
         <div class="tipp-meldung" id="tippMeldung"></div>
       </div>
       <div>
-        <div class="prog-klein" id="tippListeTitel" style="margin-bottom:6px;">Tipps für heute</div>
+        <div class="tipp-titel-zeile">
+          <div class="prog-klein" id="tippListeTitel">Tipps für heute</div>
+          <button class="btn-bestenliste" id="btnBestenliste" title="Leaderboard" aria-label="Leaderboard öffnen">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M9 9h6v12H9zM2 14h6v7H2zM16 12h6v9h-6z"/><path d="M12 2.2l1.1 2.2 2.4.35-1.75 1.7.42 2.4L12 7.7l-2.17 1.15.42-2.4L8.5 4.75l2.4-.35z"/></svg>
+            <span>Leaderboard</span>
+          </button>
+        </div>
         <ul class="history-list tipp-liste" id="tippListe"><li class="history-empty">Noch keine Tipps.</li></ul>
         <div id="tippMorgenBlock" hidden>
           <div class="prog-klein" id="tippMorgenTitel" style="margin:12px 0 6px;">Tipps für morgen</div>
@@ -328,18 +344,6 @@
       </div>
     </div>
   </section>
-
-  <section class="history-panel klapp" id="panelBestenliste" style="flex-direction:column;">
-    <div class="history-header">
-      <h2 class="klapp-titel" tabindex="0" role="button" aria-expanded="true"><span class="prog-pfeil" aria-hidden="true">▸</span> Bestenliste</h2>
-      <span class="besucher-summe" id="besteSumme">–</span>
-    </div>
-    <div style="overflow-x:auto; max-height:420px; overflow-y:auto;">
-      <table class="besucher-tabelle bestenliste">
-        <thead><tr><th class="zahl">#</th><th>Name</th><th class="zahl">Punkte</th><th class="zahl">Tipps</th><th class="zahl">Kronen</th><th class="zahl">Bester Tipp</th></tr></thead>
-        <tbody id="besteListe"><tr><td colspan="6" style="color:var(--muted)">Lade…</td></tr></tbody>
-      </table>
-    </div>  </section>
 
   <section class="history-panel prog-panel zu" id="panelPrognose">
     <div class="history-header">
@@ -446,6 +450,23 @@
   <div class="modal-buttons">
     <button class="btn-secondary" id="btnNameNein">Lieber nicht</button>
     <button class="btn-primary" id="btnNameJa">Speichern</button>
+  </div>
+</div>
+
+<!-- Bestenliste (alle Tipps zusammen) -->
+<div class="overlay" id="besteOverlay" role="dialog" aria-modal="true" aria-labelledby="besteTitel">
+  <div class="modal modal-breit">
+    <div class="beste-kopf">
+      <h3 id="besteTitel">Leaderboard</h3>
+      <span class="besucher-summe" id="besteSumme">–</span>
+      <button class="beste-zu" id="btnBesteZu" aria-label="Schließen">✕</button>
+    </div>
+    <div style="overflow-x:auto; max-height:60vh; overflow-y:auto;">
+      <table class="besucher-tabelle bestenliste">
+        <thead><tr><th class="zahl">#</th><th>Name</th><th class="zahl">Punkte</th><th class="zahl">Tipps</th><th class="zahl">Kronen</th><th class="zahl">Bester Tipp</th></tr></thead>
+        <tbody id="besteListe"><tr><td colspan="6" style="color:var(--muted)">Lade…</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -1308,6 +1329,18 @@ document.getElementById('btnBackfillOk').addEventListener('click', async () => {
 });
 
 // ---------- Anmelden ----------
+// Bestenliste als Fenster: Button oben rechts bei "Tipps für heute"
+const besteOverlay = document.getElementById('besteOverlay');
+const besteZu = () => { besteOverlay.style.display = 'none'; };
+document.getElementById('btnBestenliste').addEventListener('click', () => {
+  try { renderBestenliste(); } catch (e) { console.error(e); }
+  besteOverlay.style.display = 'flex';
+  document.getElementById('btnBesteZu').focus();
+});
+document.getElementById('btnBesteZu').addEventListener('click', besteZu);
+besteOverlay.addEventListener('click', (e) => { if (e.target === besteOverlay) besteZu(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && besteOverlay.style.display === 'flex') besteZu(); });
+
 const loginOverlay = document.getElementById('loginOverlay');
 const loginFehler = document.getElementById('loginFehler');
 // Anmelden-Knopf sehen nur Geraete, auf denen du dich schon mal angemeldet hast,
