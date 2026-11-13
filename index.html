@@ -102,6 +102,23 @@
   .beste-kopf .besucher-summe { margin-left: auto; }
   .beste-zu { background: none; color: var(--muted); font-size: 1rem; cursor: pointer; padding: 2px 6px; border-radius: 6px; }
   .beste-zu:hover { color: #fff; background: #1f2431; }
+  /* Spieler-Profil (Klick auf einen Namen im Leaderboard) */
+  .bestenliste tr.klickbar { cursor: pointer; }
+  .bestenliste tr.klickbar:hover td { background: #1f2431; }
+  .bestenliste tr.klickbar td:nth-child(2) { text-decoration: underline; text-decoration-color: #3a4358; text-underline-offset: 3px; }
+  .profil { display: flex; flex-direction: column; gap: 12px; max-height: 66vh; overflow-y: auto; }
+  .profil[hidden], #besteTabelle[hidden] { display: none; }
+  .profil-zurueck { align-self: flex-start; background: #1f2431; color: var(--muted); border: 1px solid var(--border); font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 7px; cursor: pointer; }
+  .profil-zurueck:hover { color: #fff; }
+  .profil-kopf { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .profil-kopf b { font-size: 1.3rem; color: #fff; }
+  .profil-kopf span { color: var(--muted); font-size: 0.8rem; }
+  .profil-zahlen { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+  .profil-zahlen div { background: #0b0e14; border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; }
+  .profil-zahlen b { display: block; font-size: 1.05rem; color: #fff; font-variant-numeric: tabular-nums; }
+  .profil-zahlen span { font-size: 0.7rem; color: var(--muted); }
+  .profil-unter { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .profil svg { width: 100%; height: auto; display: block; }
   .nur-chef-block { display: none; }
   body.chef .nur-chef-block { display: block; }
   @media (max-width: 600px) { .karte-rechts { margin-left: 0; } }
@@ -475,7 +492,8 @@
       <span class="besucher-summe" id="besteSumme">–</span>
       <button class="beste-zu" id="btnBesteZu" aria-label="Schließen">✕</button>
     </div>
-    <div style="overflow-x:auto; max-height:60vh; overflow-y:auto;">
+    <div class="profil" id="profil" hidden></div>
+    <div id="besteTabelle" style="overflow-x:auto; max-height:60vh; overflow-y:auto;">
       <table class="besucher-tabelle bestenliste">
         <thead><tr><th class="zahl">#</th><th>Name</th><th class="zahl">Punkte</th><th class="zahl">Tipps</th><th class="zahl">Kronen</th><th class="zahl">Bester Tipp</th></tr></thead>
         <tbody id="besteListe"><tr><td colspan="6" style="color:var(--muted)">Lade…</td></tr></tbody>
@@ -1151,14 +1169,16 @@ function renderBestenliste() {
     liste.sort((a, b) => (Math.abs(a.tipp - echt) - Math.abs(b.tipp - echt)) || (zeit(a) - zeit(b)));
     liste.forEach((x, i) => {
       const k = x.name.toLowerCase();
-      if (!leute.has(k)) leute.set(k, { name: x.name, punkte: 0, n: 0, kronen: 0, bester: Infinity });
+      if (!leute.has(k)) leute.set(k, { name: x.name, punkte: 0, n: 0, kronen: 0, bester: Infinity, tipps: [] });
       const p = leute.get(k), abw = Math.abs(x.tipp - echt) / echt;
       p.punkte += tagesPunkte(abw); p.n++;
       p.bester = Math.min(p.bester, abw);
       if (i === 0) p.kronen++;
+      p.tipps.push({ tagMs: tag, tipp: x.tipp, echt, abw, punkte: tagesPunkte(abw), platz: i + 1, von: liste.length });
     });
   }
   const l = [...leute.values()].sort((a, b) => b.punkte - a.punkte || b.kronen - a.kronen || a.n - b.n || a.bester - b.bester);
+  bestenDaten = l;
   let ich = ''; try { ich = (localStorage.getItem('preis_name') || '').toLowerCase(); } catch (e) {}
   const pz = (v) => (v * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
   // Gleich viele Punkte -> gleicher Platz (1., 1., 3.)
@@ -1166,8 +1186,9 @@ function renderBestenliste() {
   document.getElementById('besteSumme').textContent = l.length ? `${l.length} Tipper · ${tage.size} Tag${tage.size === 1 ? '' : 'e'}` : '–';
   document.getElementById('besteListe').innerHTML = l.length ? l.map((p, i) => {
     if (i === 0 || p.punkte !== l[i - 1].punkte) rang = i + 1;
+    p.rang = rang;
     const farbe = rang === 1 ? 'var(--gold)' : rang === 2 ? '#d1d5db' : rang === 3 ? '#d97706' : 'var(--muted)';
-    return `<tr${p.name.toLowerCase() === ich ? ' class="eigener"' : ''}>
+    return `<tr class="klickbar${p.name.toLowerCase() === ich ? ' eigener' : ''}" data-name="${esc(p.name.toLowerCase())}" title="Profil von ${esc(p.name)} ansehen">
       <td class="zahl" style="color:${farbe};font-weight:700">${rang}.</td>
       <td style="color:#fff;font-weight:600">${esc(p.name)}</td>
       <td class="zahl" style="color:${rang === 1 ? 'var(--gold)' : '#fff'};font-weight:700" title="Ø ${punkteText(p.punkte / p.n)} Punkte pro Tipp">${punkteText(p.punkte)}</td>
@@ -1175,7 +1196,85 @@ function renderBestenliste() {
       <td class="zahl" style="color:var(--gold);font-weight:700">${p.kronen || ''}</td>
       <td class="zahl" style="color:var(--muted)">${pz(p.bester)}</td></tr>`;
   }).join('') : '<tr><td colspan="6" style="color:var(--muted)">Noch keine ausgewerteten Tipps.</td></tr>';
+  // Ist gerade ein Profil offen, mit den neuen Daten auffrischen
+  if (!document.getElementById('profil').hidden && profilOffen) profilZeigen(profilOffen);
 }
+
+// ---------- Spieler-Profil ----------
+let bestenDaten = [], profilOffen = '';
+const profilTag = (ms) => new Date(ms).toLocaleDateString('de-DE', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: '2-digit' });
+function profilZeigen(k) {
+  const p = bestenDaten.find(x => x.name.toLowerCase() === k);
+  if (!p) return;
+  profilOffen = k;
+  // Serien: Tage am Stueck mit Tipp (auch Tage ohne ausgewerteten Preis zaehlen)
+  const tage = [...new Set(vergangeneTipps.filter(x => x.name.toLowerCase() === k).map(x => x.tagMs))].sort((a, b) => a - b);
+  let beste = 0, lauf = 0, vorher = null;
+  for (const t of tage) { lauf = vorher !== null && t - vorher === 864e5 ? lauf + 1 : 1; beste = Math.max(beste, lauf); vorher = t; }
+  const h = heuteMs(), letzter = tage[tage.length - 1];
+  const aktuell = letzter === h || letzter === h - 864e5 ? lauf : 0;
+  let kronenSerie = 0, kl = 0;
+  const tipps = p.tipps.slice().sort((a, b) => a.tagMs - b.tagMs);
+  for (let i = 0; i < tipps.length; i++) {
+    const amStueck = i > 0 && tipps[i].tagMs - tipps[i - 1].tagMs === 864e5;
+    kl = tipps[i].platz === 1 ? (amStueck && tipps[i - 1].platz === 1 ? kl + 1 : 1) : 0;
+    kronenSerie = Math.max(kronenSerie, kl);
+  }
+  const podest = tipps.filter(t => t.platz <= 3).length;
+  const pz = (v) => (v * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
+
+  // Trefferkurve: Punkte pro Tipp (100 = genau getroffen)
+  const W = 520, H = 150, L = 34, R = 12, O = 10, U = 22;
+  const X = (i) => tipps.length === 1 ? (L + W - R) / 2 : L + i * (W - L - R) / (tipps.length - 1);
+  const Y = (v) => O + (100 - v) / 100 * (H - O - U);
+  const gitter = [0, 50, 100].map(v => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#222838"/><text x="${L - 8}" y="${Y(v) + 4}" fill="#8b97ab" font-size="11" text-anchor="end">${v}</text>`).join('');
+  const linie = tipps.length > 1 ? `<polyline points="${tipps.map((t, i) => `${X(i).toFixed(1)},${Y(t.punkte).toFixed(1)}`).join(' ')}" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linejoin="round"/>` : '';
+  const punkte = tipps.map((t, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(t.punkte).toFixed(1)}" r="${t.platz === 1 ? 5.5 : 4}" fill="${t.platz === 1 ? '#f59e0b' : '#0f1117'}" stroke="#f59e0b" stroke-width="2"><title>${profilTag(t.tagMs)}: ${punkteText(t.punkte)} Punkte, Platz ${t.platz} von ${t.von}</title></circle>`).join('');
+  const achse = tipps.length ? `<text x="${L}" y="${H - 5}" fill="#8b97ab" font-size="11">${profilTag(tipps[0].tagMs)}</text><text x="${W - R}" y="${H - 5}" fill="#8b97ab" font-size="11" text-anchor="end">${profilTag(tipps[tipps.length - 1].tagMs)}</text>` : '';
+
+  const zeilen = tipps.slice().reverse().map(t => `<tr>
+    <td>${profilTag(t.tagMs)}</td><td class="zahl">${fmt(t.tipp)}</td><td class="zahl" style="color:var(--muted)">${fmt(t.echt)}</td>
+    <td class="zahl" style="color:${t.abw <= 0.02 ? 'var(--accent)' : t.abw <= 0.1 ? '#fff' : 'var(--muted)'}">${pz(t.abw)}</td>
+    <td class="zahl" style="color:${t.platz === 1 ? 'var(--gold)' : 'var(--muted)'};font-weight:${t.platz === 1 ? 700 : 400}">${t.platz === 1 ? 'Krone' : t.platz + '. von ' + t.von}</td>
+    <td class="zahl" style="font-weight:700">${punkteText(t.punkte)}</td></tr>`).join('');
+
+  document.getElementById('profil').innerHTML = `
+    <button class="profil-zurueck" id="btnProfilZurueck">&larr; Zurück zum Leaderboard</button>
+    <div class="profil-kopf"><b>${esc(p.name)}</b><span>Platz ${p.rang} von ${bestenDaten.length}</span></div>
+    <div class="profil-zahlen">
+      <div><b style="color:var(--gold)">${punkteText(p.punkte)}</b><span>Punkte</span></div>
+      <div><b>${punkteText(p.punkte / p.n)}</b><span>Ø pro Tipp</span></div>
+      <div><b>${p.n}</b><span>Tipps gewertet</span></div>
+      <div><b style="color:var(--gold)">${p.kronen}</b><span>Kronen</span></div>
+      <div><b>${podest}</b><span>Mal unter den Top 3</span></div>
+      <div><b>${pz(p.bester)}</b><span>Bester Tipp daneben</span></div>
+      <div><b>${beste} ${beste === 1 ? 'Tag' : 'Tage'}</b><span>Beste Tipp-Serie</span></div>
+      <div><b>${aktuell} ${aktuell === 1 ? 'Tag' : 'Tage'}</b><span>Aktuelle Serie</span></div>
+      <div><b>${kronenSerie}</b><span>Kronen am Stück</span></div>
+    </div>
+    <div class="profil-unter">Trefferkurve (Punkte pro Tipp)</div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Punkte pro Tipp über die Zeit">${gitter}${linie}${punkte}${achse}</svg>
+    <div class="profil-unter">Alle Tipps</div>
+    <div style="overflow-x:auto;">
+      <table class="besucher-tabelle bestenliste">
+        <thead><tr><th>Tag</th><th class="zahl">Tipp</th><th class="zahl">Echt</th><th class="zahl">Daneben</th><th class="zahl">Platz</th><th class="zahl">Punkte</th></tr></thead>
+        <tbody>${zeilen}</tbody>
+      </table>
+    </div>`;
+  document.getElementById('profil').hidden = false;
+  document.getElementById('besteTabelle').hidden = true;
+  document.getElementById('btnProfilZurueck').addEventListener('click', profilZu);
+  document.getElementById('profil').scrollTop = 0;
+}
+function profilZu() {
+  profilOffen = '';
+  document.getElementById('profil').hidden = true;
+  document.getElementById('besteTabelle').hidden = false;
+}
+document.getElementById('besteListe').addEventListener('click', (e) => {
+  const tr = e.target.closest('tr[data-name]');
+  if (tr) profilZeigen(tr.dataset.name);
+});
 
 function tippZeilen(sortiert, echt) {
   const geraeteZahl = {};
@@ -1347,6 +1446,7 @@ document.getElementById('btnBackfillOk').addEventListener('click', async () => {
 const besteOverlay = document.getElementById('besteOverlay');
 const besteZu = () => { besteOverlay.style.display = 'none'; };
 document.getElementById('btnBestenliste').addEventListener('click', () => {
+  profilZu();
   try { renderBestenliste(); } catch (e) { console.error(e); }
   besteOverlay.style.display = 'flex';
   document.getElementById('btnBesteZu').focus();
