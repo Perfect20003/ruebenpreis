@@ -539,7 +539,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, updateDoc, deleteDoc, query, orderBy, limit, getDocs, writeBatch, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, updateDoc, deleteDoc, query, orderBy, limit, getDocs, writeBatch, serverTimestamp, where, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // Diese Werte sind NICHT geheim (Firebase-Web-Konfiguration). Geschützt wird alles über die
@@ -1420,13 +1420,58 @@ document.getElementById('btnPrognose').addEventListener('click', () => {
   document.getElementById('btnPrognose').setAttribute('aria-expanded', String(!zu));
 });
 
+
+// ---------- Sammlung mit Browser-Zwischenspeicher (spart Firestore-Lesungen) ----------
+// Aeltere Eintraege liegen im localStorage. Live aus Firestore kommt nur das Fenster der letzten 24 h
+// (bzw. ab dem neuesten gespeicherten Eintrag). Ein Anzahl-Abgleich (1 Lesung je 1000 Eintraege) prueft
+// den gespeicherten Teil; passt er nicht (z.B. etwas geloescht), wird einmal alles neu geladen.
+// feld = Zeitfeld, datum = Feld ist ein Firestore-Zeitstempel (sonst ms-Zahl), tage = nur die letzten n Tage (0 = alle)
+function gespeichertAbo({ sammlung, key, feld, datum, tage, onDaten, onFehler }) {
+  const col = collection(db, sammlung), LIVE = 864e5;
+  const msAus = (z) => z && z.toMillis ? z.toMillis() : (typeof z === 'number' ? z : 0);
+  const wert = (ms) => datum ? new Date(ms) : ms;
+  let stop = null, aus = false;
+  const starten = async (voll) => {
+    let alt = [];
+    if (!voll) { try { alt = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {} }
+    const grenze = tage ? Date.now() - tage * 864e5 : 0;
+    const map = new Map((Array.isArray(alt) ? alt : []).filter(x => x && x._id && x._ms >= grenze).map(x => [x._id, x]));
+    let start = grenze;
+    if (map.size) {
+      onDaten([...map.values()]);
+      let neuester = 0; for (const x of map.values()) neuester = Math.max(neuester, x._ms);
+      start = Math.max(grenze, Math.min(neuester, Date.now() - LIVE));
+      try {
+        const bed = [where(feld, '<', wert(start))]; if (grenze) bed.push(where(feld, '>=', wert(grenze)));
+        const n = (await getCountFromServer(query(col, ...bed))).data().count;
+        let meine = 0; for (const x of map.values()) if (x._ms < start) meine++;
+        if (n !== meine) { if (!aus) starten(true); return; }
+      } catch (e) {}
+      for (const [id, x] of map) if (x._ms >= start) map.delete(id); // kommt gleich frisch
+    }
+    if (aus) return;
+    stop = onSnapshot(query(col, where(feld, '>=', wert(start))), (snap) => {
+      snap.docChanges().forEach(c => {
+        if (c.type === 'removed') { map.delete(c.doc.id); return; }
+        const x = c.doc.data(), ms = msAus(x[feld]);
+        map.set(c.doc.id, { ...x, [feld]: ms, _id: c.doc.id, _ms: ms });
+      });
+      const liste = [...map.values()];
+      try { localStorage.setItem(key, JSON.stringify(liste)); } catch (e) {}
+      onDaten(liste);
+    }, onFehler);
+  };
+  starten(false);
+  return () => { aus = true; if (stop) stop(); };
+}
+
 // ---------- Mod-Nutzer (nur fuer dich) ----------
 let modNutzerAbo = null;
 function modNutzerPruefen() {
-  if (istChef && !modNutzerAbo) modNutzerAbo = onSnapshot(query(collection(db, 'ruebenpreisNutzer'), orderBy('zeit', 'desc'), limit(10000)), (snap) => {
+  if (istChef && !modNutzerAbo) modNutzerAbo = gespeichertAbo({ sammlung: 'ruebenpreisNutzer', key: 'preis_chef_nutzer_v1', feld: 'zeit', datum: false, tage: 0, onFehler: (err) => { document.getElementById('modNutzerListe').innerHTML = `<tr><td colspan="5" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; }, onDaten: (liste) => {
     const leute = new Map();
-    snap.forEach(d => {
-      const x = d.data(); if (!x.uuid) return;
+    liste.forEach(x => {
+      if (!x.uuid) return;
       const p = leute.get(x.uuid) || { name: x.name, version: x.version, tage: new Set(), zuerst: Infinity, zuletzt: 0 };
       p.tage.add(x.tagMs);
       if (x.zeit > p.zuletzt) { p.zuletzt = x.zeit; p.name = x.name; p.version = x.version; }
@@ -1444,7 +1489,7 @@ function modNutzerPruefen() {
         <td class="zahl">${p.tage.size}</td><td>${dt(p.zuerst)}</td><td>${dt(p.zuletzt)}</td>
         <td style="color:${p.version === neueste ? 'var(--muted)' : 'var(--gold)'}">${esc(p.version || '?')}${p.version !== neueste ? ' (alt)' : ''}</td></tr>`).join('')
       : '<tr><td colspan="5" style="color:var(--muted)">Noch niemand gemeldet.</td></tr>';
-  }, (err) => { document.getElementById('modNutzerListe').innerHTML = `<tr><td colspan="5" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; });
+  } });
   if (!istChef && modNutzerAbo) { modNutzerAbo(); modNutzerAbo = null; }
 }
 
@@ -1543,8 +1588,10 @@ onAuthStateChanged(auth, (user) => {
   // Alles neu zeichnen, damit deine Bereiche (Alte Prognosen, Tipper, Mod-Nutzer) auch nach spaetem Login gefuellt werden.
   if (eintraegeAsc.length) renderAlles(); else renderListe(gefiltert().slice().reverse());
   // Anonyme Anmeldung (kommt von der Hauptseite auf derselben Adresse) einfach ignorieren - kein Popup.
-  if (istChef && !besucherAbo) besucherAbo = onSnapshot(query(besucheRef, where('zeit', '>=', new Date(Date.now() - 30 * 864e5)), orderBy('zeit', 'desc'), limit(5000)), renderBesucher,
-    (err) => { document.getElementById('besucherListe').innerHTML = `<tr><td colspan="7" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; });
+  // renderBesucher erwartet einen Snapshot: gespeicherte Liste so verpacken (zeit wieder als Zeitstempel)
+  if (istChef && !besucherAbo) besucherAbo = gespeichertAbo({ sammlung: 'preisBesuche', key: 'preis_chef_besuche_v1', feld: 'zeit', datum: true, tage: 30,
+    onDaten: (liste) => renderBesucher({ size: liste.length, forEach: (f) => liste.forEach(x => f({ data: () => ({ ...x, zeit: { toMillis: () => x._ms } }) })) }),
+    onFehler: (err) => { document.getElementById('besucherListe').innerHTML = `<tr><td colspan="7" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; } });
   if (!istChef && besucherAbo) { besucherAbo(); besucherAbo = null; }
 });
 
