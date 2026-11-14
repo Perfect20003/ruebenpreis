@@ -1,0 +1,32 @@
+name: Vorschaubild aktualisieren
+
+# Discord speichert Vorschaubilder unter ihrer Adresse zwischen. Damit nach jedem neuen Preis
+# das neue Bild kommt, haengt dieser Ablauf den Zeitstempel des neuesten Preises an die
+# Bild-Adresse in index.html an (…/bild?v=<Zeitstempel>). Committet nur, wenn sich etwas aendert,
+# also hoechstens einmal pro neuem Preis. Braucht keinen eigenen Token.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Neuesten Preis holen und Bild-Adresse anpassen
+        run: |
+          ts=$(curl -sf https://ruebenpreis-discord.ruebenpreis.workers.dev/daten \
+            | python3 -c 'import json,sys; p=[e[2] for e in json.load(sys.stdin)["preise"] if e[1] and e[2]]; print(max(p) if p else "")' || true)
+          if [ -z "$ts" ]; then echo "Worker nicht erreichbar, nichts geaendert"; exit 0; fi
+          sed -i -E "s#(workers\.dev/bild)(\?v=[0-9]+)?\"#\1?v=${ts}\"#g" index.html
+          if git diff --quiet; then echo "Bild-Adresse schon aktuell"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Vorschaubild: neuer Preis (${ts})"
+          git push
