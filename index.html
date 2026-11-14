@@ -653,7 +653,12 @@ function renderListe(desc) {
   list.querySelectorAll('.history-delete-btn').forEach(btn => btn.addEventListener('click', async () => {
     if (!istChef) return;
     if (!confirm('Diesen Eintrag löschen?')) return;
-    try { await deleteDoc(doc(db, 'settings', 'global', 'priceHistory', btn.dataset.id)); }
+    try {
+      await deleteDoc(doc(db, 'settings', 'global', 'priceHistory', btn.dataset.id));
+      geloescht.add(btn.dataset.id);
+      eintraegeAsc = eintraegeAsc.filter(e => e._id !== btn.dataset.id);
+      renderAlles();
+    }
     catch (err) { alert('Löschen fehlgeschlagen: ' + err.message); }
   }));
 }
@@ -805,19 +810,56 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && vollOffe
 let resizeTimer = null;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => renderChart(gefiltert()), 150); });
 
-// Live-Daten (lesen darf jeder)
+// Preise und Tipps kommen vom Worker (der fragt Firestore nur nach neuen Eintraegen).
+// So kostet ein Besuch 0 Firestore-Lesungen. Alle 60 Sekunden wird nachgesehen, ob es Neues gibt.
+const DATEN_URL = 'https://ruebenpreis-discord.ruebenpreis.workers.dev/daten';
 const sync = document.getElementById('syncStatus'), syncLabel = document.getElementById('syncLabel');
-onSnapshot(query(historyColRef, orderBy('timestamp', 'desc'), limit(10000)), (snap) => {
-  const desc = [];
-  snap.forEach(d => { const x = d.data(); if (typeof x.price === 'number' && typeof x.timestamp === 'number') desc.push({ ...x, _id: d.id }); });
-  eintraegeAsc = desc.reverse();
-  sync.classList.add('connected'); syncLabel.textContent = 'Live';
-  renderAlles();
-}, (err) => {
-  sync.classList.remove('connected'); syncLabel.textContent = 'Keine Verbindung';
-  document.getElementById('chartEmpty').textContent = 'Preise konnten nicht geladen werden.';
-  console.error(err);
-});
+const zeitObj = (ms) => ({ toMillis: () => ms });
+const geloescht = new Set();           // von dir gerade geloescht (bis der Worker es auch merkt)
+let datenStand = null, datenTag = 0, ersatzGeladen = false;
+function datenUebernehmen(j) {
+  eintraegeAsc = j.preise.filter(e => typeof e[1] === 'number' && typeof e[2] === 'number' && !geloescht.has(e[0]))
+    .map(e => ({ _id: e[0], price: e[1], timestamp: e[2], sender: e[3] || undefined, uuid: e[4] || undefined }))
+    .sort((a, b) => a.timestamp - b.timestamp);
+  vergangeneTipps = j.tipps.filter(t => t[1] && !geloescht.has(t[0]))
+    .map(t => ({ _id: t[0], name: t[1], tagMs: t[2], tipp: t[3], zeit: zeitObj(t[4] || 0) }));
+}
+async function datenLaden() {
+  try {
+    const res = await fetch(DATEN_URL);
+    if (!res.ok) throw new Error('Worker ' + res.status);
+    const j = await res.json();
+    sync.classList.add('connected'); syncLabel.textContent = 'Live';
+    if (j.stand === datenStand && j.heute === datenTag) return;
+    datenStand = j.stand; datenTag = j.heute;
+    datenUebernehmen(j);
+    renderAlles();
+  } catch (err) {
+    console.error(err);
+    if (!eintraegeAsc.length && !ersatzGeladen) { ersatzGeladen = true; return ersatzLaden(); }
+    sync.classList.remove('connected'); syncLabel.textContent = 'Keine Verbindung';
+  }
+}
+// Notfall: Worker nicht erreichbar -> einmal direkt aus Firestore lesen
+async function ersatzLaden() {
+  try {
+    const [p, t] = await Promise.all([
+      getDocs(query(historyColRef, orderBy('timestamp', 'desc'), limit(10000))),
+      getDocs(query(tippsRef, where('tagMs', '<=', heuteMs())))]);
+    const preise = [], tipps = [];
+    p.forEach(d => { const x = d.data(); preise.push([d.id, x.price, x.timestamp, x.sender, x.uuid]); });
+    t.forEach(d => { const x = d.data(); tipps.push([d.id, x.name, x.tagMs, x.tipp, x.zeit && x.zeit.toMillis ? x.zeit.toMillis() : 0]); });
+    datenUebernehmen({ preise, tipps });
+    sync.classList.add('connected'); syncLabel.textContent = 'Live';
+    renderAlles();
+  } catch (err) {
+    sync.classList.remove('connected'); syncLabel.textContent = 'Keine Verbindung';
+    document.getElementById('chartEmpty').textContent = 'Preise konnten nicht geladen werden.';
+    console.error(err);
+  }
+}
+setInterval(() => { if (!document.hidden) datenLaden(); }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) datenLaden(); });
 
 // ---------- Prognose (wie im Rübentimer, RuebePreisVerlauf) ----------
 // Startdaten aus der Mod (aeltere Tage, die evtl. nicht im Verlauf stehen) + alle Eintraege aus dem Verlauf.
@@ -1009,17 +1051,7 @@ function selbstGetippt() { try { return !!localStorage.getItem('preis_tipp_' + (
 function heuteMs() { return tagMsVon(berlinTag(Date.now())); }
 
 // Tipp-Serie: an wie vielen Tagen am Stück jemand getippt hat (bis heute bzw. morgen).
-let vergangeneTipps = [], aboVergangen = null, aboVergangenTag = 0;
-function vergangeneAbo() {
-  const h = heuteMs();
-  if (h === aboVergangenTag) return;
-  aboVergangenTag = h;
-  if (aboVergangen) aboVergangen();
-  aboVergangen = onSnapshot(query(tippsRef, where('tagMs', '<=', h)), (snap) => {
-    vergangeneTipps = []; snap.forEach(d => { const x = d.data(); if (x.name) vergangeneTipps.push({ name: x.name, tagMs: x.tagMs, tipp: x.tipp, zeit: x.zeit }); });
-    renderTipps();
-  }, () => {});
-}
+let vergangeneTipps = [];   // alle Tipps bis heute, kommen vom Worker (datenLaden)
 function tippTage(name) {
   const k = name.toLowerCase(), s = new Set();
   for (const x of vergangeneTipps) if (x.name.toLowerCase() === k) s.add(x.tagMs);
@@ -1042,16 +1074,13 @@ function serie(name) {
 const serieText = (n) => n >= 2 ? `<span class="serie" title="${n} Tage in Folge getippt">${n} Tage in Folge</span>` : '';
 
 // Nur fuer dich: alle Tipps aller Tage -> wer wie oft getippt hat und wie oft er die Krone hatte.
-let alleTipps = [], aboAlle = null;
+let alleTipps = [];
 function alleTippsAbo() {
-  if (istChef && !aboAlle) aboAlle = onSnapshot(query(tippsRef, orderBy('tagMs', 'desc'), limit(10000)), (snap) => {
-    alleTipps = []; snap.forEach(d => { const x = d.data(); if (x.name && x.tipp > 0) alleTipps.push(x); });
-    renderTipper();
-  }, () => {});
-  if (!istChef && aboAlle) { aboAlle(); aboAlle = null; alleTipps = []; }
+  alleTipps = istChef ? vergangeneTipps.concat(tippsMorgenChef).filter(x => x.name && x.tipp > 0) : [];
 }
 function renderTipper() {
   if (!istChef) return;
+  alleTippsAbo();
   // echter Preis je Tag (letzter Eintrag dieses Berlin-Datums)
   const echtAm = new Map();
   for (const e of eintraegeAsc) echtAm.set(tagMsVon(berlinTag(e.timestamp)), e.price);
@@ -1093,17 +1122,16 @@ function tages(m) { return [...m.entries()]; }
 function tippAbo(tagMs, ziel) {
   return onSnapshot(query(tippsRef, where('tagMs', '==', tagMs)), (snap) => {
     const l = []; snap.forEach(d => { const x = d.data(); if (x.name && x.tipp > 0) l.push({ ...x, _id: d.id }); });
-    ziel(l); renderTipps();
+    ziel(l); renderTipps(); renderTipper();
   }, () => { ziel([]); renderTipps(); });
 }
-let aboHeuteTag = 0, aboHeute = null, aboMorgen = null;
+let aboHeuteTag = 0, aboMorgen = null;
 function tippAbosPruefen() {
   const h = heuteMs();
+  tippsHeute = vergangeneTipps.filter(x => x.tagMs === h && x.tipp > 0);
   if (h !== aboHeuteTag) {
+    if (aboHeuteTag) datenLaden();   // neuer Tag: frische Daten holen
     aboHeuteTag = h;
-    if (aboHeute) aboHeute();
-    aboHeute = tippAbo(h, (l) => tippsHeute = l);
-    vergangeneAbo();
     if (aboMorgen) { aboMorgen(); aboMorgen = null; }
   }
   const morgenSehen = istChef || selbstGetippt();
@@ -1141,7 +1169,12 @@ function renderTipps() {
 
   document.querySelectorAll('[data-tipp]').forEach(b => b.addEventListener('click', async () => {
     if (!istChef || !confirm('Diesen Tipp löschen?')) return;
-    try { await deleteDoc(doc(db, 'preisTipps', b.dataset.tipp)); } catch (err) { alert(err.message); }
+    try {
+      await deleteDoc(doc(db, 'preisTipps', b.dataset.tipp));
+      geloescht.add(b.dataset.tipp);
+      vergangeneTipps = vergangeneTipps.filter(x => x._id !== b.dataset.tipp);
+      tippAbosPruefen(); renderTipps(); renderTipper();
+    } catch (err) { alert(err.message); }
   }));
 
   document.getElementById('tippInfo').textContent = '';
@@ -1368,6 +1401,7 @@ try {
   if (eig) meldung(`Dein Tipp für morgen: ${fmt(Number(eig))}`, true);
 } catch (e) {}
 tippAbosPruefen();
+datenLaden();
 
 // Bereiche fuer dich ein-/ausklappen (starten eingeklappt)
 document.querySelectorAll('.klapp-titel').forEach(h => {
@@ -1437,7 +1471,12 @@ document.getElementById('btnBackfillOk').addEventListener('click', async () => {
   const zeit = new Date(`${ds}T${ts}`).getTime();
   if (isNaN(zeit)) return fehler('Ungültiges Datum.');
   if (zeit > Date.now() + 60000) return fehler('Das Datum darf nicht in der Zukunft liegen.');
-  try { await addDoc(historyColRef, { price: preis, timestamp: zeit, sender: 'Perfect2003 (Website)' }); bfOverlay.style.display = 'none'; }
+  try {
+    const ref = await addDoc(historyColRef, { price: preis, timestamp: zeit, sender: 'Perfect2003 (Website)' });
+    bfOverlay.style.display = 'none';
+    eintraegeAsc = eintraegeAsc.concat({ _id: ref.id, price: preis, timestamp: zeit, sender: 'Perfect2003 (Website)' }).sort((a, b) => a.timestamp - b.timestamp);
+    renderAlles();
+  }
   catch (err) { fehler('Speichern fehlgeschlagen: ' + err.message); }
 });
 
@@ -1504,7 +1543,7 @@ onAuthStateChanged(auth, (user) => {
   // Alles neu zeichnen, damit deine Bereiche (Alte Prognosen, Tipper, Mod-Nutzer) auch nach spaetem Login gefuellt werden.
   if (eintraegeAsc.length) renderAlles(); else renderListe(gefiltert().slice().reverse());
   // Anonyme Anmeldung (kommt von der Hauptseite auf derselben Adresse) einfach ignorieren - kein Popup.
-  if (istChef && !besucherAbo) besucherAbo = onSnapshot(query(besucheRef, orderBy('zeit', 'desc'), limit(5000)), renderBesucher,
+  if (istChef && !besucherAbo) besucherAbo = onSnapshot(query(besucheRef, where('zeit', '>=', new Date(Date.now() - 30 * 864e5)), orderBy('zeit', 'desc'), limit(5000)), renderBesucher,
     (err) => { document.getElementById('besucherListe').innerHTML = `<tr><td colspan="7" style="color:var(--warning)">Fehler: ${esc(err.message)}</td></tr>`; });
   if (!istChef && besucherAbo) { besucherAbo(); besucherAbo = null; }
 });
