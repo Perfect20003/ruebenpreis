@@ -1563,6 +1563,52 @@ function geraetText() {
     : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
   return `${geraet} · ${browser}`;
 }
+// Genaueres Geraet: "Samsung SM-S918B · Android 15", "iPhone · iOS 18.1", "Windows 11" ...
+// Chrome/Edge verraten Modell und Version nur auf Nachfrage (User-Agent Client Hints).
+async function geraetGenau() {
+  const ua = navigator.userAgent;
+  let modell = '', system = '';
+  try {
+    const ch = navigator.userAgentData && await navigator.userAgentData.getHighEntropyValues(['model', 'platformVersion']);
+    if (ch) {
+      const v = String(ch.platformVersion || '').split('.').map(Number);
+      const p = navigator.userAgentData.platform || '';
+      if (ch.model) modell = /^SM-/.test(ch.model) ? 'Samsung ' + ch.model : ch.model;
+      if (p === 'Windows' && v[0]) system = v[0] >= 13 ? 'Windows 11' : 'Windows 10';
+      else if (p === 'Android' && v[0]) system = 'Android ' + v[0];
+    }
+  } catch (e) {}
+  if (!system) {
+    let m;
+    if ((m = ua.match(/(iPhone|iPad)[^)]*OS (\d+)[_.]?(\d+)?/))) { modell = modell || m[1]; system = (m[1] === 'iPad' ? 'iPadOS ' : 'iOS ') + m[2] + (m[3] ? '.' + m[3] : ''); }
+    else if ((m = ua.match(/Android (\d+)/))) system = 'Android ' + m[1];
+    else if (/Windows/.test(ua)) system = 'Windows';
+    else if (/CrOS/.test(ua)) system = 'ChromeOS';
+    else if (/Mac OS X/.test(ua)) system = 'macOS';
+    else if (/Linux/.test(ua)) system = 'Linux';
+  }
+  return [modell, system].filter(Boolean).join(' · ');
+}
+// Woher kam der Besucher? ?von=... im Link (z.B. aus dem Discord-Post) gewinnt, sonst der Referrer.
+function herkunft() {
+  try {
+    const u = new URL(location.href), von = u.searchParams.get('von');
+    if (von) {
+      u.searchParams.delete('von'); // aus der Adresse nehmen, damit Neuladen/Teilen es nicht mitschleppt
+      history.replaceState(null, '', u.pathname + (u.search.length > 1 ? u.search : '') + u.hash);
+      return von.replace(/[^\w .-]/g, '').slice(0, 30) === 'discord' ? 'Discord-Post' : von.replace(/[^\w .-]/g, '').slice(0, 30);
+    }
+  } catch (e) {}
+  let host = '';
+  try { host = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, '') : ''; } catch (e) {}
+  if (!host) return 'direkt/App';
+  if (host === location.hostname) return '';
+  const tabelle = [[/discord/, 'Discord'], [/(^|\.)google\./, 'Google'], [/bing\./, 'Bing'], [/duckduckgo/, 'DuckDuckGo'],
+    [/ecosia/, 'Ecosia'], [/youtube|youtu\.be/, 'YouTube'], [/twitch/, 'Twitch'], [/whatsapp|wa\.me/, 'WhatsApp'],
+    [/(^|\.)(t\.co|x\.com|twitter\.com)$/, 'X'], [/reddit/, 'Reddit'], [/perfect20003\.github\.io/, 'Rübentimer-Seite'], [/workers\.dev$/, 'Rübenpreis-Bild']];
+  for (const [re, name] of tabelle) if (re.test(host)) return name;
+  return host.slice(0, 30);
+}
 function gespeicherterName() { try { return localStorage.getItem('preis_name') || ''; } catch (e) { return ''; } }
 
 // Einen Besuch pro Seitenaufruf zählen (eigene Besuche als Perfect2003 nicht).
@@ -1577,11 +1623,26 @@ async function besuchZaehlen() {
     const alt = JSON.parse(localStorage.getItem('preis_besuch') || 'null');
     if (alt && alt.id && alt.name === name && Date.now() - alt.letzt < 30 * 60000) {
       dauerMessen(doc(db, 'preisBesuche', alt.id), alt.dauer || 0);
+      herkunft(); // nur ?von= aus der Adresse nehmen
       return;
     }
   } catch (e) {}
+  // Wiedererkennung: wie oft war dieser Browser schon da, und wann zuletzt
+  let nr = 1, vorher = 0;
   try {
-    const ref = await addDoc(besucheRef, { name, geraet: geraetId(), info: geraetText(), zeit: serverTimestamp() });
+    nr = (parseInt(localStorage.getItem('preis_besuch_nr') || '0', 10) || 0) + 1;
+    vorher = parseInt(localStorage.getItem('preis_zuletzt') || '0', 10) || 0;
+    localStorage.setItem('preis_besuch_nr', String(nr));
+    localStorage.setItem('preis_zuletzt', String(Date.now()));
+  } catch (e) {}
+  const von = herkunft();
+  const genau = await geraetGenau();
+  const info = (geraetText() + (genau ? ' · ' + genau : '')).slice(0, 60);
+  const basis = { name, geraet: geraetId(), info: geraetText(), zeit: serverTimestamp() };
+  const mehr = { ...basis, info, nr, ...(vorher ? { vorher } : {}), ...(von ? { von } : {}) };
+  try {
+    // Erst mit allen Angaben; lehnen die Firestore-Regeln das ab (noch alte Regeln), dann wie bisher
+    const ref = await addDoc(besucheRef, mehr).catch(() => addDoc(besucheRef, basis));
     try { localStorage.setItem('preis_besuch', JSON.stringify({ id: ref.id, name, dauer: 0, letzt: Date.now() })); } catch (e) {}
     dauerMessen(ref, 0);
   } catch (e) { console.warn('Besuch nicht gezählt:', e.message); }
