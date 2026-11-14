@@ -13,13 +13,13 @@
 <meta property="og:title" content="Rübenpreis heute">
 <meta property="og:description" content="Aktueller Preis, Verlauf, Prognose und Tippspiel.">
 <meta property="og:url" content="https://ruebenpreis.de/">
-<meta property="og:image" content="https://ruebenpreis-discord.ruebenpreis.workers.dev/bild">
+<meta property="og:image" content="https://ruebenpreis-discord.ruebenpreis.workers.dev/bild?v=1794610815019">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="800">
 <meta property="og:image:height" content="420">
 <meta property="og:image:alt" content="Heutiger Rübenpreis mit Verlauf der letzten 7 Tage">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://ruebenpreis-discord.ruebenpreis.workers.dev/bild">
+<meta name="twitter:image" content="https://ruebenpreis-discord.ruebenpreis.workers.dev/bild?v=1794610815019">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -1571,28 +1571,41 @@ async function besuchZaehlen() {
   if (besuchGezaehlt) return;
   besuchGezaehlt = true;
   try { if (localStorage.getItem('preis_chef') === '1') return; } catch (e) {}
+  const name = gespeicherterName().slice(0, 24);
+  // Neu laden innerhalb von 30 Minuten ist kein neuer Besuch: denselben Eintrag weiterfuehren
   try {
-    const ref = await addDoc(besucheRef, { name: gespeicherterName().slice(0, 24), geraet: geraetId(), info: geraetText(), zeit: serverTimestamp() });
-    dauerMessen(ref);
+    const alt = JSON.parse(localStorage.getItem('preis_besuch') || 'null');
+    if (alt && alt.id && alt.name === name && Date.now() - alt.letzt < 30 * 60000) {
+      dauerMessen(doc(db, 'preisBesuche', alt.id), alt.dauer || 0);
+      return;
+    }
+  } catch (e) {}
+  try {
+    const ref = await addDoc(besucheRef, { name, geraet: geraetId(), info: geraetText(), zeit: serverTimestamp() });
+    try { localStorage.setItem('preis_besuch', JSON.stringify({ id: ref.id, name, dauer: 0, letzt: Date.now() })); } catch (e) {}
+    dauerMessen(ref, 0);
   } catch (e) { console.warn('Besuch nicht gezählt:', e.message); }
 }
 
 // Verweildauer: zaehlt nur, solange der Tab sichtbar ist. Wird regelmaessig nachgetragen
 // (erste 5 Minuten alle 30 s, danach jede Minute, hoechstens 3 Stunden).
-function dauerMessen(ref) {
-  let sichtbar = 0, seit = document.visibilityState === 'visible' ? Date.now() : 0, gemeldet = 0, letzteMeldung = Date.now();
+function dauerMessen(ref, basis) {
+  // basis = Sekunden, die beim selben Besuch vor dem Neuladen schon gemeldet waren
+  let sichtbar = (basis || 0) * 1000, seit = document.visibilityState === 'visible' ? Date.now() : 0, gemeldet = basis || 0, letzteMeldung = Date.now();
+  const merken = () => { try { const a = JSON.parse(localStorage.getItem('preis_besuch') || 'null'); if (a && a.id === ref.id) { a.dauer = gemeldet; a.letzt = Date.now(); localStorage.setItem('preis_besuch', JSON.stringify(a)); } } catch (e) {} };
   const sekunden = () => Math.floor((sichtbar + (seit ? Date.now() - seit : 0)) / 1000);
   const melden = () => {
     const s = Math.min(sekunden(), 10800);
     if (s <= gemeldet) return;
     gemeldet = s; letzteMeldung = Date.now();
+    merken();
     updateDoc(ref, { dauer: s }).catch(() => {});
   };
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') { if (!seit) seit = Date.now(); }
-    else { if (seit) { sichtbar += Date.now() - seit; seit = 0; } melden(); }
+    else { if (seit) { sichtbar += Date.now() - seit; seit = 0; } melden(); merken(); }
   });
-  window.addEventListener('pagehide', melden);
+  window.addEventListener('pagehide', () => { melden(); merken(); });
   setInterval(() => {
     if (!seit) return;
     const takt = sekunden() < 300 ? 30000 : 60000;
