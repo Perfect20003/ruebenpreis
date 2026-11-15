@@ -397,14 +397,14 @@
       <span class="besucher-summe" id="rlStand"></span>
     </div>
     <div class="rl-tabs" role="tablist">
-      <button class="rl-tab aktiv" data-art="1" role="tab" aria-selected="true">Höchster Verkauf</button>
-      <button class="rl-tab" data-art="2" role="tab" aria-selected="false">Insgesamt verdient</button>
-      <button class="rl-tab" data-art="3" role="tab" aria-selected="false">Diesen Monat</button>
+      <button class="rl-tab aktiv" data-art="2" role="tab" aria-selected="true">Gesamt</button>
+      <button class="rl-tab" data-art="4" role="tab" aria-selected="false">Letzter Monat</button>
+      <button class="rl-tab" data-art="6" role="tab" aria-selected="false">Letzte Woche</button>
+      <button class="rl-tab" data-art="1" role="tab" aria-selected="false">Höchster Verkauf</button>
       <input type="search" id="rlSuche" placeholder="Name suchen" maxlength="16" autocomplete="off">
     </div>
     <ol class="rl-liste" id="rlListe"><li class="history-empty">Lade…</li></ol>
     <button class="rl-mehr" id="rlMehr" hidden></button>
-    <p class="prog-hinweis" id="rlHinweis">Werte aus der Cytooxien-Statistik (Skyblock). Wird regelmäßig aktualisiert.</p>
   </section>
 
   <section class="history-panel prog-panel zu" id="panelPrognose">
@@ -1446,9 +1446,10 @@ tippAbosPruefen();
 datenLaden();
 
 // ---------- Rueben-Bestenliste (Daten: rangliste.json im selben Ordner, wird von Hand aktualisiert) ----------
-// Format: { stand, spieler: [[name, hoechsterVerkauf, insgesamtVerdient|null, dieserMonat|null, dieseWoche|null]] }
+// Format: { stand, spieler: [[name, hoechsterVerkauf, gesamt, monat, letzterMonat, woche, letzteWoche, gestern]] }
+// (Rueben-Einnahmen je Zeitraum; null = noch nicht abgefragt)
 (() => {
-  let daten = null, art = 1, alle = false;
+  let daten = null, art = 2, alle = false;
   const liste = document.getElementById('rlListe'), mehr = document.getElementById('rlMehr'), suche = document.getElementById('rlSuche');
   const ich = () => { try { return (localStorage.getItem('preis_name') || document.getElementById('tippName').value || '').toLowerCase(); } catch (e) { return ''; } };
   function zeigen() {
