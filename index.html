@@ -1572,9 +1572,12 @@ datenLaden();
     .then(([w, d]) => {
       if (!w && !d) throw new Error('keine Daten');
       const map = new Map();
+      // Welche Spieler dabei sind, bestimmt die Datei (entfernte Namen verschwinden sofort); ohne Datei der Worker.
+      const namen = new Set(((d || w).spieler || []).filter(s => s && s[0]).map(s => String(s[0]).toLowerCase()));
       for (const quelle of [d, w]) for (const s of (quelle && quelle.spieler) || []) {
         if (!s || !s[0]) continue;
         const k = String(s[0]).toLowerCase(), alt = map.get(k);
+        if (!namen.has(k)) continue;
         if (!alt || (s[8] || 0) >= (alt[8] || 0)) map.set(k, s);
       }
       const spieler = [...map.values()];
