@@ -226,6 +226,21 @@
   .chart-tooltip .tooltip-price { font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 4px; }
 
   /* Besucher (nur fuer Perfect2003) */
+  .rl-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center; }
+  .rl-tab { background: #1f2431; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+  .rl-tab.aktiv { color: #fff; border-color: var(--accent); }
+  #rlSuche { margin-left: auto; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 5px 9px; border-radius: 8px; font-size: 0.8rem; width: 140px; outline: none; }
+  #rlSuche:focus { border-color: var(--accent); }
+  .rl-liste { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .rl-liste li { display: flex; align-items: center; gap: 10px; background: #151922; border-radius: 8px; padding: 7px 10px; font-size: 0.88rem; }
+  .rl-platz { width: 2.6em; color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .rl-liste li:nth-child(-n+3) .rl-platz { color: var(--gold); }
+  .rl-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
+  .rl-wert { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--gold); }
+  .rl-wert.leer { color: var(--muted); font-weight: 500; }
+  .rl-liste li.ich { outline: 1px solid var(--accent); }
+  .rl-mehr { margin-top: 8px; align-self: center; background: #1f2431; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+  @media (max-width: 520px) { #rlSuche { margin-left: 0; width: 100%; } }
   .besucher-tabelle { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
   .besucher-tabelle th, .besucher-tabelle td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
   .besucher-tabelle th { color: var(--muted); font-weight: 600; }
@@ -374,6 +389,22 @@
         <p class="prog-hinweis" id="tippMorgenHinweis" style="margin:10px 0 0">Gib einen Tipp ab, dann siehst du auch die Tipps der anderen für morgen.</p>
       </div>
     </div>
+  </section>
+
+  <section class="history-panel" id="panelRangliste">
+    <div class="history-header">
+      <h2>Rüben-Bestenliste</h2>
+      <span class="besucher-summe" id="rlStand"></span>
+    </div>
+    <div class="rl-tabs" role="tablist">
+      <button class="rl-tab aktiv" data-art="1" role="tab" aria-selected="true">Höchster Verkauf</button>
+      <button class="rl-tab" data-art="2" role="tab" aria-selected="false">Insgesamt verdient</button>
+      <button class="rl-tab" data-art="3" role="tab" aria-selected="false">Diesen Monat</button>
+      <input type="search" id="rlSuche" placeholder="Name suchen" maxlength="16" autocomplete="off">
+    </div>
+    <ol class="rl-liste" id="rlListe"><li class="history-empty">Lade…</li></ol>
+    <button class="rl-mehr" id="rlMehr" hidden></button>
+    <p class="prog-hinweis" id="rlHinweis">Werte aus der Cytooxien-Statistik (Skyblock). Wird regelmäßig aktualisiert.</p>
   </section>
 
   <section class="history-panel prog-panel zu" id="panelPrognose">
@@ -1413,6 +1444,47 @@ try {
 } catch (e) {}
 tippAbosPruefen();
 datenLaden();
+
+// ---------- Rueben-Bestenliste (Daten: rangliste.json im selben Ordner, wird von Hand aktualisiert) ----------
+// Format: { stand, spieler: [[name, hoechsterVerkauf, insgesamtVerdient|null, dieserMonat|null, dieseWoche|null]] }
+(() => {
+  let daten = null, art = 1, alle = false;
+  const liste = document.getElementById('rlListe'), mehr = document.getElementById('rlMehr'), suche = document.getElementById('rlSuche');
+  const ich = () => { try { return (localStorage.getItem('preis_name') || document.getElementById('tippName').value || '').toLowerCase(); } catch (e) { return ''; } };
+  function zeigen() {
+    if (!daten) return;
+    const mitWert = daten.spieler.filter(s => typeof s[art] === 'number');
+    const ohne = daten.spieler.filter(s => typeof s[art] !== 'number');
+    mitWert.sort((a, b) => b[art] - a[art]);
+    // Platz wie im Spiel: gleicher Wert = gleicher Platz
+    let platz = 0, vorher = null;
+    const zeilen = mitWert.map((s, i) => { if (s[art] !== vorher) { platz = i + 1; vorher = s[art]; } return { s, platz }; })
+      .concat(ohne.map(s => ({ s, platz: null })));
+    const q = suche.value.trim().toLowerCase(), meinName = ich();
+    let sicht = q ? zeilen.filter(z => z.s[0].toLowerCase().includes(q)) : zeilen;
+    const gesamt = sicht.length;
+    if (!q && !alle) sicht = sicht.slice(0, 10);
+    liste.innerHTML = sicht.length ? sicht.map(({ s, platz }) =>
+      `<li${meinName && s[0].toLowerCase() === meinName ? ' class="ich"' : ''}><span class="rl-platz">${platz ? platz + '.' : '–'}</span>` +
+      `<span class="rl-name">${esc(s[0])}</span>` +
+      (typeof s[art] === 'number' ? `<span class="rl-wert">${fmt(s[art])}</span>` : `<span class="rl-wert leer">noch nicht abgefragt</span>`) + `</li>`).join('')
+      : '<li class="history-empty">Niemand gefunden.</li>';
+    mehr.hidden = !!q || gesamt <= 10;
+    mehr.textContent = alle ? 'Weniger anzeigen' : `Alle ${gesamt} anzeigen`;
+  }
+  document.querySelectorAll('.rl-tab').forEach(b => b.addEventListener('click', () => {
+    art = +b.dataset.art;
+    document.querySelectorAll('.rl-tab').forEach(x => { x.classList.toggle('aktiv', x === b); x.setAttribute('aria-selected', String(x === b)); });
+    zeigen();
+  }));
+  mehr.addEventListener('click', () => { alle = !alle; zeigen(); });
+  suche.addEventListener('input', zeigen);
+  fetch('rangliste.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(j => {
+    daten = j;
+    document.getElementById('rlStand').textContent = 'Stand: ' + new Date(j.stand).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    zeigen();
+  }).catch(() => { document.getElementById('panelRangliste').hidden = true; });
+})();
 
 // Bereiche fuer dich ein-/ausklappen (starten eingeklappt)
 document.querySelectorAll('.klapp-titel').forEach(h => {
