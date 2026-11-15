@@ -1526,40 +1526,51 @@ datenLaden();
   const kachel = (titel, wert, rang) => `<div><b>${wert}</b><span>${titel}</span>${rang ? `<small>Platz ${fmt(rang)} global</small>` : ''}</div>`;
   const zahlOder = (n) => typeof n === 'number' ? fmt(n) : '–';
   const spielzeit = (ms) => { if (!ms) return '–'; const h = Math.floor(ms / 36e5); return h >= 48 ? `${fmt(Math.floor(h / 24))} Tage ${h % 24} Std.` : `${h} Std. ${Math.floor(ms / 6e4) % 60} Min.`; };
+  // Einheitliche Form fuer die Anzeige, egal ob live, aus dem Browser-Speicher oder aus der Bestenliste (Worker)
+  function ausApi(j) {
+    const sb = (j.stats && j.stats.skyblock) || {}, g = (z, k) => sb[z] && typeof sb[z][k] === 'number' ? sb[z][k] : null;
+    const info = j.playerInfo || {}, rang = info.rank || {};
+    return { name: info.username, id: j.id, farbe: info.coloredName, rang: rang.name, rangFarbe: rang.color,
+      gesamt: g('global', 'turnips_money_earned'), lm: g('lastMonthly', 'turnips_money_earned') || 0, lw: g('lastWeekly', 'turnips_money_earned') || 0,
+      hoechster: g('global', 'turnip_highest_sold'), rangHoechster: g('global', 'rank_turnip_highest_sold'),
+      handel: g('global', 'trade_station_money_earned'), rangHandel: g('global', 'rank_trade_station_money_earned'), zeit: g('global', 'time') };
+  }
+  // Zeile aus der Bestenliste: [name, hoechster, gesamt, monat, lm, woche, lw, gestern, ts, handel, rangHandel, zeit, rangHoechster, farbe, rang, rangFarbe, id]
+  const ausZeile = (z) => ({ name: z[0], gesamt: z[2], lm: z[4], lw: z[6], hoechster: z[1], ts: z[8], handel: z[9], rangHandel: z[10], zeit: z[11],
+    rangHoechster: z[12], farbe: z[13], rang: z[14], rangFarbe: z[15], id: z[16] });
+  const SP_KEY = 'rl_spieler_v1', SP_FRISCH = 3 * 60000;
+  const spCache = () => { try { return JSON.parse(localStorage.getItem(SP_KEY) || '{}'); } catch (e) { return {}; } };
+  function spMerken(k, d) { try { const c = spCache(); c[k] = d; const ks = Object.keys(c); if (ks.length > 150) ks.sort((a, b) => c[a].ts - c[b].ts).slice(0, ks.length - 150).forEach(x => delete c[x]); localStorage.setItem(SP_KEY, JSON.stringify(c)); } catch (e) {} }
+  function spielerMalen(d, live) {
+    const $ = (id) => document.getElementById(id);
+    if (d.name) $('spName').textContent = d.name;
+    $('spName').style.color = d.farbe ? mcFarbe(d.farbe) : '#fff';
+    $('spRang').textContent = d.rang || ''; $('spRang').style.color = d.rangFarbe ? mcFarbe(d.rangFarbe) : '';
+    if (d.id) $('spKopf').src = `https://mc-heads.net/avatar/${d.id}/48`;
+    $('spRueben').innerHTML = kachel('Gesamt verdient', zahlOder(d.gesamt)) + kachel('Letzter Monat', zahlOder(d.lm)) +
+      kachel('Letzte Woche', zahlOder(d.lw)) + kachel('Höchster Verkauf', zahlOder(d.hoechster), d.rangHoechster);
+    $('spMarkt').innerHTML = kachel('Am Inselmarkt verdient', zahlOder(d.handel), d.rangHandel) + kachel('Spielzeit Skyblock', spielzeit(d.zeit));
+    const wann = d.ts ? new Date(d.ts).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' Uhr' : '';
+    $('spStand').textContent = live ? 'Live aus der Cytooxien-Statistik.' : 'Stand: ' + wann + (live === false ? ' (gerade zu viele Abfragen, gleich gibt es wieder Live-Werte)' : '');
+  }
   async function spielerZeigen(name) {
-    const zeile = daten && daten.spieler.find(s => s[0].toLowerCase() === name.toLowerCase());
-    document.getElementById('spName').textContent = name; document.getElementById('spName').style.color = '#fff';
-    document.getElementById('spRang').textContent = ''; document.getElementById('spKopf').src = `https://mc-heads.net/avatar/${encodeURIComponent(name)}/48`;
-    document.getElementById('spRueben').innerHTML = document.getElementById('spMarkt').innerHTML = '';
-    document.getElementById('spStand').textContent = 'Lade…';
+    const k = name.toLowerCase(), $ = (id) => document.getElementById(id);
+    const zeile = daten && daten.spieler.find(s => s[0].toLowerCase() === k);
+    $('spName').textContent = name; $('spName').style.color = '#fff'; $('spRang').textContent = '';
+    $('spKopf').src = `https://mc-heads.net/avatar/${encodeURIComponent(name)}/48`;
+    $('spRueben').innerHTML = $('spMarkt').innerHTML = ''; $('spStand').textContent = 'Lade…';
     ov.style.display = 'flex';
+    // Beste gespeicherte Werte: Browser-Speicher (letztes Live-Laden) oder Bestenliste, je nachdem was neuer ist
+    const gemerkt = spCache()[k], ausListe = zeile ? ausZeile(zeile) : null;
+    const gespeichert = gemerkt && (!ausListe || (gemerkt.ts || 0) >= (ausListe.ts || 0)) ? gemerkt : (ausListe && gemerkt ? { ...gemerkt, ...Object.fromEntries(Object.entries(ausListe).filter(([, v]) => v != null)) } : ausListe);
+    if (gemerkt && Date.now() - gemerkt.ts < SP_FRISCH) { spielerMalen(gemerkt, true); return; }   // gerade erst geladen: Kontingent sparen
+    if (gespeichert) spielerMalen(gespeichert, null);
     let j = null;
     try { const r = await fetch('https://api.cytooxien.de/user/' + encodeURIComponent(name)); if (r.ok) j = await r.json(); } catch (e) {}
-    const sb = (j && j.stats && j.stats.skyblock) || {}, g = (z, k) => sb[z] && typeof sb[z][k] === 'number' ? sb[z][k] : null;
-    if (j) {
-      const info = j.playerInfo || {}, rang = info.rank || {};
-      if (info.username) document.getElementById('spName').textContent = info.username;
-      document.getElementById('spName').style.color = mcFarbe(info.coloredName);
-      document.getElementById('spRang').textContent = rang.name || '';
-      document.getElementById('spRang').style.color = mcFarbe(rang.color);
-      if (j.id) document.getElementById('spKopf').src = `https://mc-heads.net/avatar/${j.id}/48`;
-      document.getElementById('spRueben').innerHTML =
-        kachel('Gesamt verdient', zahlOder(g('global', 'turnips_money_earned'))) +
-        kachel('Letzter Monat', zahlOder(g('lastMonthly', 'turnips_money_earned') || 0)) +
-        kachel('Letzte Woche', zahlOder(g('lastWeekly', 'turnips_money_earned') || 0)) +
-        kachel('Höchster Verkauf', zahlOder(g('global', 'turnip_highest_sold')), g('global', 'rank_turnip_highest_sold'));
-      document.getElementById('spMarkt').innerHTML =
-        kachel('Am Inselmarkt verdient', zahlOder(g('global', 'trade_station_money_earned')), g('global', 'rank_trade_station_money_earned')) +
-        kachel('Spielzeit Skyblock', spielzeit(g('global', 'time')));
-      document.getElementById('spStand').textContent = 'Live aus der Cytooxien-Statistik.';
-    } else if (zeile) {
-      document.getElementById('spRueben').innerHTML =
-        kachel('Gesamt verdient', zahlOder(zeile[2])) + kachel('Letzter Monat', zahlOder(zeile[4])) +
-        kachel('Letzte Woche', zahlOder(zeile[6])) + kachel('Höchster Verkauf', zahlOder(zeile[1]));
-      document.getElementById('spMarkt').innerHTML = '<div><span>Gerade nicht abrufbar</span></div>';
-      document.getElementById('spStand').textContent = 'Zu viele Abfragen in kurzer Zeit. Gespeicherter Stand' +
-        (zeile[8] ? ' vom ' + new Date(zeile[8]).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' Uhr' : '') + '. In ein paar Minuten gibt es wieder Live-Werte.';
-    } else document.getElementById('spStand').textContent = 'Statistik gerade nicht abrufbar.';
+    if (ov.style.display !== 'flex') return;
+    if (j) { const d = { ...ausApi(j), ts: Date.now() }; spMerken(k, d); spielerMalen(d, true); }
+    else if (gespeichert) spielerMalen(gespeichert, false);
+    else $('spStand').textContent = 'Statistik gerade nicht abrufbar. In ein paar Minuten noch mal versuchen.';
   }
   liste.addEventListener('click', (e) => { const b = e.target.closest('.rl-name'); if (b) spielerZeigen(b.dataset.name); });
   suche.addEventListener('input', zeigen);
