@@ -1466,7 +1466,7 @@ datenLaden();
     const gesamt = sicht.length;
     if (!q && !alle) sicht = sicht.slice(0, 10);
     liste.innerHTML = sicht.length ? sicht.map(({ s, platz }) =>
-      `<li${meinName && s[0].toLowerCase() === meinName ? ' class="ich"' : ''}><span class="rl-platz">${platz ? platz + '.' : '–'}</span>` +
+      `<li${meinName && s[0].toLowerCase() === meinName ? ' class="ich"' : ''}${s[8] ? ` title="Stand: ${new Date(s[8]).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}"` : ''}><span class="rl-platz">${platz ? platz + '.' : '–'}</span>` +
       `<span class="rl-name">${esc(s[0])}</span>` +
       (typeof s[art] === 'number' ? `<span class="rl-wert">${fmt(s[art])}</span>` : `<span class="rl-wert leer">noch nicht abgefragt</span>`) + `</li>`).join('')
       : '<li class="history-empty">Niemand gefunden.</li>';
@@ -1480,11 +1480,17 @@ datenLaden();
   }));
   mehr.addEventListener('click', () => { alle = !alle; zeigen(); });
   suche.addEventListener('input', zeigen);
-  fetch('rangliste.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(j => {
-    daten = j;
-    document.getElementById('rlStand').textContent = 'Stand: ' + new Date(j.stand).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    zeigen();
-  }).catch(() => { document.getElementById('panelRangliste').hidden = true; });
+  // Zuerst vom Worker (fragt die Spieler laufend neu ab), sonst die Datei als Ersatz
+  const holen = (url, opt) => fetch(url, opt).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  holen('https://ruebenpreis-discord.ruebenpreis.workers.dev/rangliste')
+    .catch(() => holen('rangliste.json', { cache: 'no-cache' }))
+    .then(j => {
+      daten = j;
+      const d = new Date(j.stand);
+      document.getElementById('rlStand').textContent = 'Stand: ' + d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) + ', ' +
+        d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+      zeigen();
+    }).catch(() => { document.getElementById('panelRangliste').hidden = true; });
 })();
 
 // Bereiche fuer dich ein-/ausklappen (starten eingeklappt)
