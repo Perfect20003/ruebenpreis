@@ -1482,8 +1482,21 @@ datenLaden();
   suche.addEventListener('input', zeigen);
   // Zuerst vom Worker (fragt die Spieler laufend neu ab), sonst die Datei als Ersatz
   const holen = (url, opt) => fetch(url, opt).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
-  holen('https://ruebenpreis-discord.ruebenpreis.workers.dev/rangliste')
-    .catch(() => holen('rangliste.json', { cache: 'no-cache' }))
+  // Worker und Datei zusammenfuehren: pro Spieler gilt der neuere Wert (Index 8 = Abfragezeit).
+  // So ist eine neu hochgeladene rangliste.json sofort sichtbar, auch wenn der Worker sie noch nicht gelesen hat.
+  Promise.all([holen('https://ruebenpreis-discord.ruebenpreis.workers.dev/rangliste').catch(() => null),
+               holen('rangliste.json', { cache: 'no-cache' }).catch(() => null)])
+    .then(([w, d]) => {
+      if (!w && !d) throw new Error('keine Daten');
+      const map = new Map();
+      for (const quelle of [d, w]) for (const s of (quelle && quelle.spieler) || []) {
+        if (!s || !s[0]) continue;
+        const k = String(s[0]).toLowerCase(), alt = map.get(k);
+        if (!alt || (s[8] || 0) >= (alt[8] || 0)) map.set(k, s);
+      }
+      const spieler = [...map.values()];
+      return { stand: Math.max(0, ...spieler.map(s => s[8] || 0), (d && d.stand) || 0), spieler };
+    })
     .then(j => {
       daten = j;
       const d = new Date(j.stand);
