@@ -235,7 +235,15 @@
   .rl-liste li { display: flex; align-items: center; gap: 10px; background: #151922; border-radius: 8px; padding: 7px 10px; font-size: 0.88rem; }
   .rl-platz { width: 2.6em; color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 600; }
   .rl-liste li:nth-child(-n+3) .rl-platz { color: var(--gold); }
-  .rl-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
+  .rl-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; background: none; text-align: left; font: inherit; cursor: pointer; padding: 0;
+    text-decoration: underline; text-decoration-color: #3a4358; text-underline-offset: 3px; }
+  .rl-name:hover { text-decoration-color: var(--accent); }
+  .sp-kopf img { width: 48px; height: 48px; border-radius: 6px; image-rendering: pixelated; background: #0b0e14; }
+  .sp-titel { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .sp-titel h3 { font-size: 1.2rem; overflow-wrap: anywhere; }
+  .sp-titel span { font-size: 0.8rem; font-weight: 600; }
+  .sp-kopf .beste-zu { margin-left: auto; align-self: flex-start; }
+  .profil-zahlen small { display: block; font-size: 0.7rem; color: var(--gold); margin-top: 2px; }
   .rl-wert { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--gold); }
   .rl-wert.leer { color: var(--muted); font-weight: 500; }
   .rl-liste li.ich { outline: 1px solid var(--accent); }
@@ -530,6 +538,22 @@
         <tbody id="besteListe"><tr><td colspan="6" style="color:var(--muted)">Lade…</td></tr></tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- Spieler-Uebersicht (Klick auf einen Namen in der Rueben-Bestenliste) -->
+<div class="overlay" id="spielerOverlay" role="dialog" aria-modal="true" aria-labelledby="spName">
+  <div class="modal modal-breit">
+    <div class="beste-kopf sp-kopf">
+      <img id="spKopf" alt="" width="48" height="48">
+      <div class="sp-titel"><h3 id="spName">–</h3><span id="spRang"></span></div>
+      <button class="beste-zu" id="btnSpielerZu" aria-label="Schließen">✕</button>
+    </div>
+    <div class="profil-unter">Rüben</div>
+    <div class="profil-zahlen" id="spRueben"></div>
+    <div class="profil-unter">Inselmarkt und Skyblock</div>
+    <div class="profil-zahlen" id="spMarkt"></div>
+    <p class="prog-hinweis" id="spStand" style="margin:0"></p>
   </div>
 </div>
 
@@ -1466,8 +1490,8 @@ datenLaden();
     const gesamt = sicht.length;
     if (!q && !alle) sicht = sicht.slice(0, 10);
     liste.innerHTML = sicht.length ? sicht.map(({ s, platz }) =>
-      `<li${meinName && s[0].toLowerCase() === meinName ? ' class="ich"' : ''}${s[8] ? ` title="Stand: ${new Date(s[8]).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}"` : ''}><span class="rl-platz">${platz ? platz + '.' : '–'}</span>` +
-      `<span class="rl-name">${esc(s[0])}</span>` +
+      `<li${meinName && s[0].toLowerCase() === meinName ? ' class="ich"' : ''}><span class="rl-platz">${platz ? platz + '.' : '–'}</span>` +
+      `<button class="rl-name" data-name="${esc(s[0])}" title="Statistik anzeigen">${esc(s[0])}</button>` +
       (typeof s[art] === 'number' ? `<span class="rl-wert">${fmt(s[art])}</span>` : `<span class="rl-wert leer">noch nicht abgefragt</span>`) + `</li>`).join('')
       : '<li class="history-empty">Niemand gefunden.</li>';
     mehr.hidden = !!q || gesamt <= 10;
@@ -1479,6 +1503,62 @@ datenLaden();
     zeigen();
   }));
   mehr.addEventListener('click', () => { alle = !alle; zeigen(); });
+
+  // ---- Spieler-Uebersicht: laedt live aus der Cytooxien-API (jeder Besucher hat dort ~10 Abfragen pro 5 Min.).
+  // Klappt das nicht (Limit/Fehler), werden die gespeicherten Werte aus der Bestenliste gezeigt.
+  const ov = document.getElementById('spielerOverlay');
+  const spZu = () => { ov.style.display = 'none'; };
+  document.getElementById('btnSpielerZu').addEventListener('click', spZu);
+  ov.addEventListener('click', (e) => { if (e.target === ov) spZu(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ov.style.display === 'flex') spZu(); });
+  // Minecraft-Farbcodes (§a oder §x§r§r§g§g§b§b) in eine CSS-Farbe umwandeln
+  const MC = { 0: '#000000', 1: '#0000aa', 2: '#00aa00', 3: '#00aaaa', 4: '#aa0000', 5: '#aa00aa', 6: '#ffaa00', 7: '#aaaaaa', 8: '#555555', 9: '#5555ff', a: '#55ff55', b: '#55ffff', c: '#ff5555', d: '#ff55ff', e: '#ffff55', f: '#ffffff' };
+  function mcFarbe(code) {
+    const s = String(code || '');
+    const hex = s.match(/§x((?:§[0-9a-f]){6})/i);
+    if (hex) return '#' + hex[1].replace(/§/g, '');
+    const m = s.match(/§([0-9a-f])/i);
+    return m ? MC[m[1].toLowerCase()] : '#ffffff';
+  }
+  const kachel = (titel, wert, rang) => `<div><b>${wert}</b><span>${titel}</span>${rang ? `<small>Platz ${fmt(rang)} global</small>` : ''}</div>`;
+  const zahlOder = (n) => typeof n === 'number' ? fmt(n) : '–';
+  const spielzeit = (ms) => { if (!ms) return '–'; const h = Math.floor(ms / 36e5); return h >= 48 ? `${fmt(Math.floor(h / 24))} Tage ${h % 24} Std.` : `${h} Std. ${Math.floor(ms / 6e4) % 60} Min.`; };
+  async function spielerZeigen(name) {
+    const zeile = daten && daten.spieler.find(s => s[0].toLowerCase() === name.toLowerCase());
+    document.getElementById('spName').textContent = name; document.getElementById('spName').style.color = '#fff';
+    document.getElementById('spRang').textContent = ''; document.getElementById('spKopf').src = `https://mc-heads.net/avatar/${encodeURIComponent(name)}/48`;
+    document.getElementById('spRueben').innerHTML = document.getElementById('spMarkt').innerHTML = '';
+    document.getElementById('spStand').textContent = 'Lade…';
+    ov.style.display = 'flex';
+    let j = null;
+    try { const r = await fetch('https://api.cytooxien.de/user/' + encodeURIComponent(name)); if (r.ok) j = await r.json(); } catch (e) {}
+    const sb = (j && j.stats && j.stats.skyblock) || {}, g = (z, k) => sb[z] && typeof sb[z][k] === 'number' ? sb[z][k] : null;
+    if (j) {
+      const info = j.playerInfo || {}, rang = info.rank || {};
+      if (info.username) document.getElementById('spName').textContent = info.username;
+      document.getElementById('spName').style.color = mcFarbe(info.coloredName);
+      document.getElementById('spRang').textContent = rang.name || '';
+      document.getElementById('spRang').style.color = mcFarbe(rang.color);
+      if (j.id) document.getElementById('spKopf').src = `https://mc-heads.net/avatar/${j.id}/48`;
+      document.getElementById('spRueben').innerHTML =
+        kachel('Gesamt verdient', zahlOder(g('global', 'turnips_money_earned'))) +
+        kachel('Letzter Monat', zahlOder(g('lastMonthly', 'turnips_money_earned') || 0)) +
+        kachel('Letzte Woche', zahlOder(g('lastWeekly', 'turnips_money_earned') || 0)) +
+        kachel('Höchster Verkauf', zahlOder(g('global', 'turnip_highest_sold')), g('global', 'rank_turnip_highest_sold'));
+      document.getElementById('spMarkt').innerHTML =
+        kachel('Am Inselmarkt verdient', zahlOder(g('global', 'trade_station_money_earned')), g('global', 'rank_trade_station_money_earned')) +
+        kachel('Spielzeit Skyblock', spielzeit(g('global', 'time')));
+      document.getElementById('spStand').textContent = 'Live aus der Cytooxien-Statistik.';
+    } else if (zeile) {
+      document.getElementById('spRueben').innerHTML =
+        kachel('Gesamt verdient', zahlOder(zeile[2])) + kachel('Letzter Monat', zahlOder(zeile[4])) +
+        kachel('Letzte Woche', zahlOder(zeile[6])) + kachel('Höchster Verkauf', zahlOder(zeile[1]));
+      document.getElementById('spMarkt').innerHTML = '<div><span>Gerade nicht abrufbar</span></div>';
+      document.getElementById('spStand').textContent = 'Zu viele Abfragen in kurzer Zeit. Gespeicherter Stand' +
+        (zeile[8] ? ' vom ' + new Date(zeile[8]).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' Uhr' : '') + '. In ein paar Minuten gibt es wieder Live-Werte.';
+    } else document.getElementById('spStand').textContent = 'Statistik gerade nicht abrufbar.';
+  }
+  liste.addEventListener('click', (e) => { const b = e.target.closest('.rl-name'); if (b) spielerZeigen(b.dataset.name); });
   suche.addEventListener('input', zeigen);
   // Zuerst vom Worker (fragt die Spieler laufend neu ab), sonst die Datei als Ersatz
   const holen = (url, opt) => fetch(url, opt).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
