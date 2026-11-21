@@ -98,6 +98,16 @@
   .btn-bestenliste:hover { border-color: var(--gold); }
   .btn-bestenliste span { color: #fff; }
   .modal.modal-breit { max-width: 560px; }
+  .modal.modal-beste { max-width: 760px; }
+  .modal-beste .besucher-tabelle { font-size: 0.88rem; }
+  .modal-beste .besucher-tabelle th, .modal-beste .besucher-tabelle td { padding: 8px 12px; }
+  /* Scrollbalken überall dezent grau statt weiß */
+  * { scrollbar-color: #3a4358 transparent; scrollbar-width: thin; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #3a4358; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #4b5569; }
+  ::-webkit-scrollbar-corner { background: transparent; }
   .beste-kopf { display: flex; align-items: center; gap: 10px; }
   .beste-kopf .besucher-summe { margin-left: auto; }
   .beste-zu { background: none; color: var(--muted); font-size: 1rem; cursor: pointer; padding: 2px 6px; border-radius: 6px; }
@@ -160,7 +170,7 @@
 
   .history-list {
     list-style: none; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;
-    padding-right: 4px; scrollbar-color: #fff #0b0e14; scrollbar-width: thin;
+    padding-right: 4px; scrollbar-color: #3a4358 transparent; scrollbar-width: thin;
   }
   .history-list li {
     display: flex; align-items: center; gap: 6px; font-size: 0.78rem; padding: 5px 8px;
@@ -211,7 +221,7 @@
   .voll-inhalt { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 260px; gap: 16px; }
   #vollChartWrap { position: relative; min-height: 0; }
   #vollChartWrap svg { width: 100%; height: 100%; display: block; }
-  .voll-liste { list-style: none; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 4px; scrollbar-color: #fff #0b0e14; scrollbar-width: thin; }
+  .voll-liste { list-style: none; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 4px; scrollbar-color: #3a4358 transparent; scrollbar-width: thin; }
   .voll-liste li { display: flex; align-items: center; gap: 8px; font-size: 1rem; padding: 8px 12px; border-radius: 8px; background: #151922; }
   .voll-liste .history-change { font-size: 0.9rem; }
   .voll-liste .coin-icon { width: 17px; height: 17px; }
@@ -531,17 +541,17 @@
 
 <!-- Bestenliste (alle Tipps zusammen) -->
 <div class="overlay" id="besteOverlay" role="dialog" aria-modal="true" aria-labelledby="besteTitel">
-  <div class="modal modal-breit">
+  <div class="modal modal-breit modal-beste">
     <div class="beste-kopf">
       <h3 id="besteTitel">Leaderboard</h3>
       <span class="besucher-summe" id="besteSumme">–</span>
       <button class="beste-zu" id="btnBesteZu" aria-label="Schließen">✕</button>
     </div>
     <div class="profil" id="profil" hidden></div>
-    <div id="besteTabelle" style="overflow-x:auto; max-height:60vh; overflow-y:auto;">
+    <div id="besteTabelle" style="overflow-x:auto; max-height:72vh; overflow-y:auto;">
       <table class="besucher-tabelle bestenliste">
         <thead><tr id="besteKopf"><th class="zahl" data-sort="rang">#</th><th data-sort="name">Name</th><th class="zahl" data-sort="punkte">Punkte</th><th class="zahl" data-sort="n">Tipps</th><th class="zahl" data-sort="schnitt" title="Durchschnittliche Punkte pro Tipp">Ø pro Tipp</th><th class="zahl" data-sort="kronen">Kronen</th><th class="zahl" data-sort="bester">Bester Tipp</th></tr></thead>
-        <tbody id="besteListe"><tr><td colspan="6" style="color:var(--muted)">Lade…</td></tr></tbody>
+        <tbody id="besteListe"><tr><td colspan="7" style="color:var(--muted)">Lade…</td></tr></tbody>
       </table>
     </div>
   </div>
