@@ -537,7 +537,7 @@
     <div class="profil" id="profil" hidden></div>
     <div id="besteTabelle" style="overflow-x:auto; max-height:60vh; overflow-y:auto;">
       <table class="besucher-tabelle bestenliste">
-        <thead><tr><th class="zahl">#</th><th>Name</th><th class="zahl">Punkte</th><th class="zahl">Tipps</th><th class="zahl">Kronen</th><th class="zahl">Bester Tipp</th></tr></thead>
+        <thead><tr><th class="zahl">#</th><th>Name</th><th class="zahl">Punkte</th><th class="zahl">Tipps</th><th class="zahl" title="Durchschnittliche Punkte pro Tipp">Ø pro Tipp</th><th class="zahl">Kronen</th><th class="zahl">Bester Tipp</th></tr></thead>
         <tbody id="besteListe"><tr><td colspan="6" style="color:var(--muted)">Lade…</td></tr></tbody>
       </table>
     </div>
@@ -1295,9 +1295,10 @@ function renderBestenliste() {
       <td style="color:#fff;font-weight:600">${esc(p.name)}</td>
       <td class="zahl" style="color:${rang === 1 ? 'var(--gold)' : '#fff'};font-weight:700" title="Ø ${punkteText(p.punkte / p.n)} Punkte pro Tipp">${punkteText(p.punkte)}</td>
       <td class="zahl">${p.n}</td>
+      <td class="zahl" style="color:#fff">${punkteText(p.punkte / p.n)}</td>
       <td class="zahl" style="color:var(--gold);font-weight:700">${p.kronen || ''}</td>
       <td class="zahl" style="color:var(--muted)">${pz(p.bester)}</td></tr>`;
-  }).join('') : '<tr><td colspan="6" style="color:var(--muted)">Noch keine ausgewerteten Tipps.</td></tr>';
+  }).join('') : '<tr><td colspan="7"style="color:var(--muted)">Noch keine ausgewerteten Tipps.</td></tr>';
   // Ist gerade ein Profil offen, mit den neuen Daten auffrischen
   if (!document.getElementById('profil').hidden && profilOffen) profilZeigen(profilOffen);
 }
