@@ -104,6 +104,9 @@
   .beste-zu:hover { color: #fff; background: #1f2431; }
   /* Spieler-Profil (Klick auf einen Namen im Leaderboard) */
   .bestenliste tr.klickbar { cursor: pointer; }
+  #besteKopf th[data-sort] { cursor: pointer; user-select: none; white-space: nowrap; }
+  #besteKopf th[data-sort]:hover { color: #fff; }
+  #besteKopf th[data-sort]::after { content: attr(data-pfeil); color: var(--gold); }
   .bestenliste tr.klickbar:hover td { background: #1f2431; }
   .bestenliste tr.klickbar td:nth-child(2) { text-decoration: underline; text-decoration-color: #3a4358; text-underline-offset: 3px; }
   .profil { display: flex; flex-direction: column; gap: 12px; max-height: 66vh; overflow-y: auto; }
@@ -537,7 +540,7 @@
     <div class="profil" id="profil" hidden></div>
     <div id="besteTabelle" style="overflow-x:auto; max-height:60vh; overflow-y:auto;">
       <table class="besucher-tabelle bestenliste">
-        <thead><tr><th class="zahl">#</th><th>Name</th><th class="zahl">Punkte</th><th class="zahl">Tipps</th><th class="zahl" title="Durchschnittliche Punkte pro Tipp">Ø pro Tipp</th><th class="zahl">Kronen</th><th class="zahl">Bester Tipp</th></tr></thead>
+        <thead><tr id="besteKopf"><th class="zahl" data-sort="rang">#</th><th data-sort="name">Name</th><th class="zahl" data-sort="punkte">Punkte</th><th class="zahl" data-sort="n">Tipps</th><th class="zahl" data-sort="schnitt" title="Durchschnittliche Punkte pro Tipp">Ø pro Tipp</th><th class="zahl" data-sort="kronen">Kronen</th><th class="zahl" data-sort="bester">Bester Tipp</th></tr></thead>
         <tbody id="besteListe"><tr><td colspan="6" style="color:var(--muted)">Lade…</td></tr></tbody>
       </table>
     </div>
@@ -596,6 +599,8 @@
 </div>
 
 <script type="module">
+// Sortierung der Tipp-Bestenliste (oben, damit sie schon beim ersten Zeichnen existiert)
+let besteSort = { spalte: 'rang', auf: true };
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, updateDoc, deleteDoc, query, orderBy, limit, getDocs, writeBatch, serverTimestamp, where, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -1255,6 +1260,16 @@ function renderTipps() {
 // Pro Tipp: 100 Punkte minus Prozent daneben (genau getroffen = 100, 100 % oder mehr daneben = 0).
 const tagesPunkte = (abw) => Math.max(0, 100 - abw * 100);
 const punkteText = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+// Sortierung der Bestenliste: Klick auf einen Spaltenkopf sortiert danach, zweiter Klick dreht die Richtung um.
+// Zahlen starten absteigend (Bester Tipp und # aufsteigend, weil dort klein = gut), Name A-Z.
+const SORT_AUF_START = { rang: true, name: true, bester: true };
+document.querySelectorAll('#besteKopf th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const s = th.dataset.sort;
+    besteSort = besteSort.spalte === s ? { spalte: s, auf: !besteSort.auf } : { spalte: s, auf: !!SORT_AUF_START[s] };
+    renderBestenliste();
+  });
+});
 function renderBestenliste() {
   const echtAm = new Map();
   for (const e of eintraegeAsc) echtAm.set(tagMsVon(berlinTag(e.timestamp)), e.price);
@@ -1285,10 +1300,23 @@ function renderBestenliste() {
   const pz = (v) => (v * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
   // Gleich viele Punkte -> gleicher Platz (1., 1., 3.)
   let rang = 0;
+  l.forEach((p, i) => { if (i === 0 || p.punkte !== l[i - 1].punkte) rang = i + 1; p.rang = rang; });
+  // Anzeige nach der angeklickten Spalte sortieren (Platz # bleibt der nach Punkten)
+  const wert = { rang: p => p.rang, name: p => p.name.toLowerCase(), punkte: p => p.punkte, n: p => p.n,
+    schnitt: p => p.punkte / p.n, kronen: p => p.kronen, bester: p => p.bester }[besteSort.spalte] || (p => p.rang);
+  const sicht = l.slice().sort((a, b) => {
+    const x = wert(a), y = wert(b);
+    const c = typeof x === 'string' ? x.localeCompare(y) : x - y;
+    return (besteSort.auf ? c : -c) || a.rang - b.rang;
+  });
+  document.querySelectorAll('#besteKopf th[data-sort]').forEach(th => {
+    const aktiv = th.dataset.sort === besteSort.spalte;
+    th.dataset.pfeil = aktiv ? (besteSort.auf ? ' ▲' : ' ▼') : '';
+    th.setAttribute('aria-sort', aktiv ? (besteSort.auf ? 'ascending' : 'descending') : 'none');
+  });
   document.getElementById('besteSumme').textContent = l.length ? `${l.length} Tipper · ${tage.size} Tag${tage.size === 1 ? '' : 'e'}` : '–';
-  document.getElementById('besteListe').innerHTML = l.length ? l.map((p, i) => {
-    if (i === 0 || p.punkte !== l[i - 1].punkte) rang = i + 1;
-    p.rang = rang;
+  document.getElementById('besteListe').innerHTML = l.length ? sicht.map((p) => {
+    const rang = p.rang;
     const farbe = rang === 1 ? 'var(--gold)' : rang === 2 ? '#d1d5db' : rang === 3 ? '#d97706' : 'var(--muted)';
     return `<tr class="klickbar${p.name.toLowerCase() === ich ? ' eigener' : ''}" data-name="${esc(p.name.toLowerCase())}" title="Profil von ${esc(p.name)} ansehen">
       <td class="zahl" style="color:${farbe};font-weight:700">${rang}.</td>
@@ -1298,7 +1326,7 @@ function renderBestenliste() {
       <td class="zahl" style="color:#fff">${punkteText(p.punkte / p.n)}</td>
       <td class="zahl" style="color:var(--gold);font-weight:700">${p.kronen || ''}</td>
       <td class="zahl" style="color:var(--muted)">${pz(p.bester)}</td></tr>`;
-  }).join('') : '<tr><td colspan="7"style="color:var(--muted)">Noch keine ausgewerteten Tipps.</td></tr>';
+  }).join('') : '<tr><td colspan="7" style="color:var(--muted)">Noch keine ausgewerteten Tipps.</td></tr>';
   // Ist gerade ein Profil offen, mit den neuen Daten auffrischen
   if (!document.getElementById('profil').hidden && profilOffen) profilZeigen(profilOffen);
 }
