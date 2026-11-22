@@ -896,6 +896,7 @@ function datenUebernehmen(j) {
     .sort((a, b) => a.timestamp - b.timestamp);
   vergangeneTipps = j.tipps.filter(t => t[1] && !geloescht.has(t[0]))
     .map(t => ({ _id: t[0], name: t[1], tagMs: t[2], tipp: t[3], zeit: zeitObj(t[4] || 0) }));
+  extrasEinmischen();
 }
 // Um Mitternacht (23:58-00:10 Berlin) kommt der neue Preis: dann alle 10 s nachsehen, sonst jede Minute
 function umMitternacht() {
@@ -943,7 +944,36 @@ setInterval(() => {
   if (Date.now() - letzterAbruf < (umMitternacht() ? 10000 : 60000) - 500) return;
   letzterAbruf = Date.now(); datenLaden();
 }, 10000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) datenLaden(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) datenLaden(); liveMitternacht(); });
+
+// Um Mitternacht zusaetzlich direkt in Firestore auf neue Preise lauschen: der neue Preis erscheint dann
+// sofort, ohne auf den Worker zu warten. Kostet pro offenem Tab nur 1 Lesung beim Start + 1 je neuem Preis.
+const liveExtra = new Map();
+let liveStop = null;
+function extrasEinmischen() {
+  if (!liveExtra.size) return;
+  eintraegeAsc = eintraegeAsc.filter(e => !liveExtra.has(e._id))
+    .concat([...liveExtra.values()].filter(e => !geloescht.has(e._id)))
+    .sort((a, b) => a.timestamp - b.timestamp);
+}
+function liveMitternacht() {
+  const an = umMitternacht() && !document.hidden;
+  if (an && !liveStop) {
+    const max = eintraegeAsc.reduce((m, e) => Math.max(m, e.timestamp || 0), 0);
+    liveStop = onSnapshot(query(historyColRef, where('timestamp', '>', max), orderBy('timestamp', 'asc')), (snap) => {
+      let neu = false;
+      snap.docChanges().forEach(ch => {
+        const id = ch.doc.id, x = ch.doc.data();
+        if (ch.type === 'removed') { liveExtra.delete(id); eintraegeAsc = eintraegeAsc.filter(e => e._id !== id); neu = true; return; }
+        if (typeof x.price !== 'number' || typeof x.timestamp !== 'number') return;
+        liveExtra.set(id, { _id: id, price: x.price, timestamp: x.timestamp, sender: x.sender || undefined, uuid: x.uuid || undefined });
+        neu = true;
+      });
+      if (neu) { extrasEinmischen(); renderAlles(); }
+    }, (err) => { console.error(err); if (liveStop) { liveStop(); liveStop = null; } });
+  } else if (!an && liveStop) { liveStop(); liveStop = null; }
+}
+setInterval(liveMitternacht, 10000);
 
 // ---------- Prognose (wie im Rübentimer, RuebePreisVerlauf) ----------
 // Startdaten aus der Mod (aeltere Tage, die evtl. nicht im Verlauf stehen) + alle Eintraege aus dem Verlauf.
@@ -1509,7 +1539,7 @@ try {
   if (eig) meldung(`Dein Tipp für morgen: ${fmt(Number(eig))}`, true);
 } catch (e) {}
 tippAbosPruefen();
-datenLaden();
+datenLaden().then(liveMitternacht);
 
 // ---------- Rueben-Bestenliste (Daten: rangliste.json im selben Ordner, wird von Hand aktualisiert) ----------
 // Format: { stand, spieler: [[name, hoechsterVerkauf, gesamt, monat, letzterMonat, woche, letzteWoche, gestern]] }
