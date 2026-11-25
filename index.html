@@ -1652,11 +1652,14 @@ datenLaden().then(liveMitternacht);
     .then(([w, d]) => {
       if (!w && !d) throw new Error('keine Daten');
       const map = new Map();
+      // Schluessel = Name wie in rangliste.json. Der Worker liefert ihn in Index 17 mit, damit Spieler,
+      // die sich umbenannt haben, ihrem Eintrag zugeordnet bleiben (angezeigt wird der neue Name aus Index 0).
+      const key = (s) => String(s[17] || s[0]).toLowerCase();
       // Welche Spieler dabei sind, bestimmt die Datei (entfernte Namen verschwinden sofort); ohne Datei der Worker.
-      const namen = new Set(((d || w).spieler || []).filter(s => s && s[0]).map(s => String(s[0]).toLowerCase()));
+      const namen = new Set(((d || w).spieler || []).filter(s => s && s[0]).map(key));
       for (const quelle of [d, w]) for (const s of (quelle && quelle.spieler) || []) {
         if (!s || !s[0]) continue;
-        const k = String(s[0]).toLowerCase(), alt = map.get(k);
+        const k = key(s), alt = map.get(k);
         if (!namen.has(k)) continue;
         if (!alt || (s[8] || 0) >= (alt[8] || 0)) map.set(k, s);
       }
